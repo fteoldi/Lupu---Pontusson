@@ -1,0 +1,24 @@
+---
+title: "Lupu and Pontusson"
+output: pdf_document
+---
+
+# Design declaration
+
+# Replication
+
+## Data cleaning
+
+## Redistribution models
+
+## Social spending models
+
+## Immigration
+
+## Partisanship
+
+## Redistribution and social spending with partisanship
+
+# Robustness checks via design modification
+
+# Extension

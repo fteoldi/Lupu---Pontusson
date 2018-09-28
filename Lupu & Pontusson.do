@@ -2,6 +2,7 @@
 * The Structure of Inequality and the Politics of Redistribution
 * Last revised March 2011
 
+* Replication by Filippo, Julian, and Zara
 
 set more 1
 set varabbrev off

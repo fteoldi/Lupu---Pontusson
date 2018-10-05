@@ -166,10 +166,26 @@ data_countries <- lapply(unique(data$country), function(x)
 )
 
 for (i in 1:length(data_countries)){
-for (j in 1:10) {
-  data_countries[[i]][,35+j] <- rollmean(data_countries[[i]][,13], j, fill = NA, align = "right")
+  for (j in 1:10) {
+    data_countries[[i]][,35+j] <- rollmean(data_countries[[i]][,13], j, fill = NA, align = "right")
+  }
 }
-}
+
+for (i in 1:length(data_countries)){
+  for (j in 2:9) {
+    data_countries[[i]][,46] <- ifelse((data_countries[[i]][,35] == 1, data_countries[[i]][,13])
+    
+  }
+
+#gen dv`x'=.
+	#foreach y of numlist 2(1)9{
+	#	replace dv`x' = l1.`x' if since==1
+	#	replace dv`x' = m`y'`x' if since==`y' & m`y'`x'!=.
+	#	replace dv`x' = m10`x' if (since==10 & m10`x'!=.) | (since==. & redist!=. & m10`x'!=.)
+	#}
+	#foreach y of numlist 1(1)10{
+		#drop m`y'`x'
+	#}
 
 data_countries[[1]]$m1turnout <- rollmean(data_countries[[1]]$turnout, 1, fill = NA, align = "right")
 data_countries[[1]]$m2turnout <- rollmean(data_countries[[1]]$turnout, 2, fill = NA, align = "right")

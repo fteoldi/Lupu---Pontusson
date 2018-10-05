@@ -160,6 +160,7 @@ rm(data_countries)
 Now we can calculate the moving averages:
 
 ```{r}
+library('dplyr')
 
 data_countries <- lapply(unique(data$country), function(x)
   subset(data, data$country==x)
@@ -171,11 +172,6 @@ for (i in 1:length(data_countries)){
   }
 }
 
-for (i in 1:length(data_countries)){
-  for (j in 2:9) {
-    data_countries[[i]][,46] <- ifelse((data_countries[[i]][,35] == 1, data_countries[[i]][,13])
-    
-  }
 
 #gen dv`x'=.
 	#foreach y of numlist 2(1)9{
@@ -186,26 +182,9 @@ for (i in 1:length(data_countries)){
 	#foreach y of numlist 1(1)10{
 		#drop m`y'`x'
 	#}
-
-data_countries[[1]]$m1turnout <- rollmean(data_countries[[1]]$turnout, 1, fill = NA, align = "right")
-data_countries[[1]]$m2turnout <- rollmean(data_countries[[1]]$turnout, 2, fill = NA, align = "right")
-data_countries[[1]]$m3turnout <- rollmean(data_countries[[1]]$turnout, 3, fill = NA, align = "right")
-data_countries[[1]]$m4turnout <- rollmean(data_countries[[1]]$turnout, 4, fill = NA, align = "right")
-data_countries[[1]]$m5turnout <- rollmean(data_countries[[1]]$turnout, 5, fill = NA, align = "right")
-data_countries[[1]]$m5turnout <- rollmean(data_countries[[1]]$turnout, 6, fill = NA, align = "right")
-
-
-
 ```
 
-foreach y of numlist 1(1)10{
-	tssmooth ma m`y'`x' = `x', window (`y' 0)
-	}
 
-foreach y of numlist 1(1)10{
-		tssmooth ma m`y`turnout = turnout, window (`y` 0)
-	}
-	
 
 rm(list=ls())
 ## Redistribution models

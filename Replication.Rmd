@@ -158,18 +158,12 @@ data <- do.call("rbind", data_countries)
 
 data[,46] <- NA
 
-data[,46] <- case_when(
+for (j in 2:10) {
+data[,46][j] <- case_when(
    data$since ==  1 ~ lag(data[,31], 1),
-   data$since ==  2 ~ data[,37],
-   data$since ==  3 ~ data[,38],
-   data$since ==  4 ~ data[,39],
-   data$since ==  5 ~ data[,40],
-   data$since ==  6 ~ data[,41],
-   data$since ==  7 ~ data[,42],
-   data$since ==  8 ~ data[,43],
-   data$since ==  9 ~ data[,44],
-   data$since ==  10 ~ data[,45]
+   data$since ==  j ~ data[,36+j]
 )
+}
 
 # Calculate moving average for pratio9050 
 
@@ -187,18 +181,12 @@ data <- do.call("rbind", data_countries)
 
 data[,57] <- NA
 
-data[,57] <- case_when(
+for (j in 2:10) {
+data[,57][j] <- case_when(
    data$since ==  1 ~ lag(data[,24], 1),
-   data$since ==  2 ~ data[,37+11],
-   data$since ==  3 ~ data[,38+11],
-   data$since ==  4 ~ data[,39+11],
-   data$since ==  5 ~ data[,40+11],
-   data$since ==  6 ~ data[,41+11],
-   data$since ==  7 ~ data[,42+11],
-   data$since ==  8 ~ data[,43+11],
-   data$since ==  9 ~ data[,44+11],
-   data$since ==  10 ~ data[,45+11]
+   data$since ==  j ~ data[,47+j]
 )
+}
 
 # Calculate moving average for pratio5010 
 

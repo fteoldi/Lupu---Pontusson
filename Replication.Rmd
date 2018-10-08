@@ -165,7 +165,7 @@ data[,46][j] <- case_when(
 )
 }
 
-# Calculate moving average for pratio9050 
+# Calculate moving average for pratio9050 (var24)
 
 data_countries <- lapply(unique(data$country), function(x)
   subset(data, data$country==x)
@@ -188,25 +188,228 @@ data[,57][j] <- case_when(
 )
 }
 
-# Calculate moving average for pratio5010 
+# Calculate moving average for pratio5010 (var25)
 
-# Calculate moving average for stdpjoint 
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
 
-# Calculate moving average for skew 
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+23+j] <- lag(rollapply(data_countries[[i]][,25], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
 
-# Calculate moving average for stddisp_gall 
+data <- do.call("rbind", data_countries)
 
-# Calculate moving average for pvoc 
+data[,68] <- NA
 
-# Calculate moving average for union 
+for (j in 2:10) {
+data[,68][j] <- case_when(
+   data$since ==  1 ~ lag(data[,25], 1),
+   data$since ==  j ~ data[,58+j]
+)
+}
+# Calculate moving average for stdpjoint (var22)
 
-# Calculate moving average for fpop 
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
 
-# Calculate moving average for fempar 
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+34+j] <- lag(rollapply(data_countries[[i]][,22], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
 
-# Calculate moving average for unempl 
+data <- do.call("rbind", data_countries)
 
-# Calculate moving average for turnout
+data[,79] <- NA
+
+for (j in 2:10) {
+data[,79][j] <- case_when(
+   data$since ==  1 ~ lag(data[,22], 1),
+   data$since ==  j ~ data[,69+j]
+)
+}
+# Calculate moving average for skew (var33)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+45+j] <- lag(rollapply(data_countries[[i]][,33], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,90] <- NA
+
+for (j in 2:10) {
+data[,90][j] <- case_when(
+   data$since ==  1 ~ lag(data[,33], 1),
+   data$since ==  j ~ data[,80+j]
+)
+}
+
+# Calculate moving average for stddisp_gall (var23) 
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+56+j] <- lag(rollapply(data_countries[[i]][,23], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,101] <- NA
+
+for (j in 2:10) {
+data[,101][j] <- case_when(
+   data$since ==  1 ~ lag(data[,23], 1),
+   data$since ==  j ~ data[,91+j]
+)
+}
+
+# Calculate moving average for pvoc (var29)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+67+j] <- lag(rollapply(data_countries[[i]][,29], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,112] <- NA
+
+for (j in 2:10) {
+data[,112][j] <- case_when(
+   data$since ==  1 ~ lag(data[,29], 1),
+   data$since ==  j ~ data[,102+j]
+)
+}
+# Calculate moving average for union (var12)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+78+j] <- lag(rollapply(data_countries[[i]][,12], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,123] <- NA
+
+for (j in 2:10) {
+data[,123][j] <- case_when(
+   data$since ==  1 ~ lag(data[,12], 1),
+   data$since ==  j ~ data[,113+j]
+)
+}
+# Calculate moving average for fpop (var30)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+89+j] <- lag(rollapply(data_countries[[i]][,30], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,134] <- NA
+
+for (j in 2:10) {
+data[,134][j] <- case_when(
+   data$since ==  1 ~ lag(data[,30], 1),
+   data$since ==  j ~ data[,124+j]
+)
+}
+# Calculate moving average for fempar (var10)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+100+j] <- lag(rollapply(data_countries[[i]][,10], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,145] <- NA
+
+for (j in 2:10) {
+data[,145][j] <- case_when(
+   data$since ==  1 ~ lag(data[,10], 1),
+   data$since ==  j ~ data[,135+j]
+)
+}
+# Calculate moving average for unempl (var11)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+111+j] <- lag(rollapply(data_countries[[i]][,11], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,156] <- NA
+
+for (j in 2:10) {
+data[,156][j] <- case_when(
+   data$since ==  1 ~ lag(data[,11], 1),
+   data$since ==  j ~ data[,146+j]
+)
+}
+# Calculate moving average for turnout (var13)
+
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
+
+for (i in 1:length(data_countries)){
+  for (j in 1:10) {
+    data_countries[[i]][,35+111+j] <- lag(rollapply(data_countries[[i]][,13], j, FUN = mean, fill = NA, align = "right"),1)
+  }
+}
+
+data <- do.call("rbind", data_countries)
+
+data[,167] <- NA
+
+for (j in 2:10) {
+data[,167][j] <- case_when(
+   data$since ==  1 ~ lag(data[,13], 1),
+   data$since ==  j ~ data[,157+j]
+)
+}
 ```
 
 # Design declaration

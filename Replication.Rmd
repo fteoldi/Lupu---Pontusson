@@ -19,7 +19,7 @@ data <- read_dta(paste0(directory, "LupPon_APSR.dta"))
 
 ## Data cleaning
 
-First, the authors redefine invert disproportionality measures, `disp_gall` as such.
+First, the authors redefine inverse disproportionality measures, `disp_gall` as such.
 
 ```{r}
 data$disp_gall <- data$disp_gall*-1
@@ -41,7 +41,7 @@ data$stdpjoint <- range01(data$pjoint)
 data$stdpdisp_gall <- range01(data$disp_gall)
 ```
 
-Next, we interpolate missing values. But before we can do so, first we define as all the variables that need to be interpolated: `pratio9050`, `pratio5010`, `pratio9050s`, `pratio5010s`, `pforeign`, and `pvoc`. However, we need to interpolate missing values for each country, not for the dataset as a whole. So we write a loop to define the object `data_countries` as a list of the data (with these aforementioned new variables) subsetted by each country.
+Next, we interpolate missing values by first defining all the variables that need to be interpolated: `pratio9050`, `pratio5010`, `pratio9050s`, `pratio5010s`, `pforeign`, and `pvoc`. To interpolate missing values for each country, rather than for the dataset as a whole, we write a loop to define the object `data_countries` as a list of the data (with these aforementioned new variables) subsetted by each country.
 
 ```{r}
 data$pratio9050 <- NA
@@ -58,7 +58,7 @@ data_countries <- lapply(unique(data$country), function(x)
 
 At this point, we can interpolate missing values for each variable. The `zoo` package allows use to use the function `na.approx` to linearly interpolate missing values. We use a set of loops that interpolates missing values indexed for each country, `i`, in our list of `data.frames`, `data_countries`, *for each variable*.[^1] Finally, we can use `rbind` to bind this new list into a single `data.frame`, and remove our list of `data.frames`.
 
-[^1]: This is what `data_countries[[i]][,y>23]` refers to, where `i` is each country and `y` represents of the new variables. The 24th column is `pratio9050`, the 25th column `pratio5010`, and so on. Each of these are interpolated using the original variables, which is represented in `data_countries[[i]][,z>5]`, where `z` represents the original variables corresponding the new variables (i.e. `pratio9050` is interpolated using `ratio9050`, which is in the 5th column, and so on). Note that the index along which the function is operating is by year (`data_contries[[i]][,3]`) for *every* variable. In other words, we are replacing the variables of interest in each country for missing years.
+[^1]: This is what `data_countries[[i]][,y>23]` refers to, where `i` is each country and `y` represents the new variables. The 24th column is `pratio9050`, the 25th column `pratio5010`, and so on. Each of these are interpolated using the original variables, which are represented in `data_countries[[i]][,z>5]`, where `z` represents the original variables corresponding the new variables (i.e. `pratio9050` is interpolated using `ratio9050`, which is in the 5th column, and so on). Note that the index along which the function is operating is by year (`data_contries[[i]][,3]`) for *every* variable. In other words, we are replacing the variables of interest in each country for missing years.
 
 ```{r}
 library('zoo')
@@ -103,7 +103,7 @@ data <- do.call("rbind", data_countries)
 rm(data_countries)
 ```
 
-We generate an immigration measure, `fpop` which reflects the percentage of the population that is foreign-born by using our interpolated measure `pforeign`, multiplying it by 1000, and dividin this result by `pop`, which is total population.
+We generate an immigration measure, `fpop` which reflects the percentage of the population that is foreign-born by using our interpolated measure `pforeign`, multiplying it by 1000, and dividing this result by `pop`, which is total population.
 
 ```{r}
 data$pforeign <- data$pforeign*1000
@@ -114,12 +114,14 @@ Our last data cleaning step before moving on to generating the averages for the 
 
 ```{r}
 data$ratio9010 <- data$pratio9050*data$pratio5010
-data$ratio9010s <- data$pratio9050s*data$pratio5010s
+data$ratio9010s <- data$pratio9050s*data$pratio5010s #not extrapolated
 data$skew <- data$pratio9050/data$pratio5010
-data$skews <- data$pratio9050s/data$pratio5010s
+data$skews <- data$pratio9050s/data$pratio5010s #not extrapolated
 ```
 
-Let's generate the averages for the redistribution models by using a series of loops. First we generate the `since` variable, which represents the years since the last redistribution, `redist`, for each country. We remake our list of the subset of countries as before and define `since` (`data_countries[[i]][35]`) accordingly by creating a new logical vector, `nona`, that tells us when the `redist` variable is and is not defined for each country.
+Because data on redistribution are unequally spaced for the period of the study, the authors use a time series cross sectional model where the indepdent variables are averaged across the period since the last redistribution observation. 
+
+We generate moving averages for the redistribution models by using a series of loops. First we generate the `since` variable, which represents the years since the last redistribution, `redist`, for each country. We remake our list of the subset of countries as before and define `since` (`data_countries[[i]][35]`) accordingly by creating a new logical vector, `nona`, that tells us when the `redist` variable is and is not defined for each country.
 
 ```{r}
 data_countries <- lapply(unique(data$country), function(x)
@@ -388,6 +390,7 @@ data[,156][j] <- case_when(
    data$since ==  j ~ data[,146+j]
 )
 }
+
 # Calculate moving average for turnout (var13)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -411,6 +414,56 @@ data[,167][j] <- case_when(
 )
 }
 ```
+
+```{r}
+Now, we match these moving averages to redistribution observations by creating a new set of independent variables with values that correspond to the correct moving average based on the period of redistribution. There are three possible scenarios here:
+1) A redistribution observation is observed 1 year after the previous: the independent variable takes on its 1-year lagged value.
+2) A redistribution observation is observed n years ago, where n is [2,10]: the independent variable takes on its nth year moving average value.
+3) A redstribution observation is the first observation for the country: the indpeendnet variable takes on its 10th year moving average value. 
+```
+
+```{r}
+Social Spending: To estimate the model using the 2nd dependent variable (socspend), we create five-year moving averages for this variable and all independent variables to represent a slow-moving causal process.
+
+
+
+```
+# Replication
+
+rm(list=ls())
+## Redistribution models
+
+Replicating results from Table 2:
+```{r}
+
+#Subsetting the data to observations with non-missing redist values:
+
+Redistsample<- data[!is.na(data$redist),]
+
+
+
+ cat("Subsetting data and calculating lagged DV...\n")
++ 	cat("> LupPon <- LupPon[!is.na(LupPon$redist),]\n> LupPon$redist.lag <- unlist(by(LupPon,LupPon$id,function(x){c(NA,x[,\"redist\"][1:(length(x[,\"redist\"])-1)])}))\n> LupPon$time <- unlist(by(LupPon,LupPon$id,function(x) seq(1:nrow(x))))")
++ 	LupPon <- LupPon[!is.na(LupPon$redist),]
++ 	LupPon$redist.lag <- unlist(by(LupPon,LupPon$id,function(x){c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])}))
++ 	LupPon$time <- unlist(by(LupPon,LupPon$id,function(x) seq(1:nrow(x))))
+
+
+```
+
+## Social spending models
+
+## Immigration
+
+## Partisanship
+
+## Redistribution and social spending with partisanship
+
+# Robustness checks via design modification
+
+# Extension
+
+
 
 # Design declaration
 
@@ -465,20 +518,3 @@ model = lm_robust, label = "lm")
 ```{r}
 lupu_pontusson_2011_design <- population + potentials + estimand + estimator_1
 ```
-
-# Replication
-
-rm(list=ls())
-## Redistribution models
-
-## Social spending models
-
-## Immigration
-
-## Partisanship
-
-## Redistribution and social spending with partisanship
-
-# Robustness checks via design modification
-
-# Extension

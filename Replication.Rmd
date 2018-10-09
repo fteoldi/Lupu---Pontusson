@@ -160,12 +160,18 @@ data <- do.call("rbind", data_countries)
 
 data[,46] <- NA
 
-for (j in 2:10) {
-data[,46][j] <- case_when(
-   data$since ==  1 ~ lag(data[,31], 1),
-   data$since ==  j ~ data[,36+j]
+data[,46] <- case_when(
+   data[,35] ==  1 ~ data[,36],
+   data[,35] ==  2 ~ data[,37],
+   data[,35] ==  3 ~ data[,38],
+   data[,35] ==  4 ~ data[,39],
+   data[,35] ==  5 ~ data[,40],
+   data[,35] ==  6 ~ data[,41],
+   data[,35] ==  7 ~ data[,42],
+   data[,35] ==  8 ~ data[,43],
+   data[,35] ==  9 ~ data[,44],
+   data[,35] ==  10 ~ data[,45]
 )
-}
 
 # Calculate moving average for pratio9050 (var24)
 
@@ -181,14 +187,20 @@ for (i in 1:length(data_countries)){
 
 data <- do.call("rbind", data_countries)
 
-data[,57] <- NA
+data[,46+11] <- NA
 
-for (j in 2:10) {
-data[,57][j] <- case_when(
-   data$since ==  1 ~ lag(data[,24], 1),
-   data$since ==  j ~ data[,47+j]
+data[,46+11] <- case_when(
+   data[,35] ==  1 ~ data[,36+11],
+   data[,35] ==  2 ~ data[,37+11],
+   data[,35] ==  3 ~ data[,38+11],
+   data[,35] ==  4 ~ data[,39+11],
+   data[,35] ==  5 ~ data[,40+11],
+   data[,35] ==  6 ~ data[,41+11],
+   data[,35] ==  7 ~ data[,42+11],
+   data[,35] ==  8 ~ data[,43+11],
+   data[,35] ==  9 ~ data[,44+11],
+   data[,35] ==  10 ~ data[,45+11]
 )
-}
 
 # Calculate moving average for pratio5010 (var25)
 
@@ -198,20 +210,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+23+j] <- lag(rollapply(data_countries[[i]][,25], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+22+j] <- lag(rollapply(data_countries[[i]][,25], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,68] <- NA
+data[,46+22] <- NA
 
-for (j in 2:10) {
-data[,68][j] <- case_when(
-   data$since ==  1 ~ lag(data[,25], 1),
-   data$since ==  j ~ data[,58+j]
+data[,46+22] <- case_when(
+   data[,35] ==  1 ~ data[,36+22],
+   data[,35] ==  2 ~ data[,37+22],
+   data[,35] ==  3 ~ data[,38+22],
+   data[,35] ==  4 ~ data[,39+22],
+   data[,35] ==  5 ~ data[,40+22],
+   data[,35] ==  6 ~ data[,41+22],
+   data[,35] ==  7 ~ data[,42+22],
+   data[,35] ==  8 ~ data[,43+22],
+   data[,35] ==  9 ~ data[,44+22],
+   data[,35] ==  10 ~ data[,45+22]
 )
-}
+
 # Calculate moving average for stdpjoint (var22)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -220,20 +239,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+34+j] <- lag(rollapply(data_countries[[i]][,22], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+33+j] <- lag(rollapply(data_countries[[i]][,22], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,79] <- NA
+data[,46+33] <- NA
 
-for (j in 2:10) {
-data[,79][j] <- case_when(
-   data$since ==  1 ~ lag(data[,22], 1),
-   data$since ==  j ~ data[,69+j]
+data[,46+33] <- case_when(
+   data[,35] ==  1 ~ data[,36+33],
+   data[,35] ==  2 ~ data[,37+33],
+   data[,35] ==  3 ~ data[,38+33],
+   data[,35] ==  4 ~ data[,39+33],
+   data[,35] ==  5 ~ data[,40+33],
+   data[,35] ==  6 ~ data[,41+33],
+   data[,35] ==  7 ~ data[,42+33],
+   data[,35] ==  8 ~ data[,43+33],
+   data[,35] ==  9 ~ data[,44+33],
+   data[,35] ==  10 ~ data[,45+33]
 )
-}
+
 # Calculate moving average for skew (var33)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -242,20 +268,26 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+45+j] <- lag(rollapply(data_countries[[i]][,33], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+44+j] <- lag(rollapply(data_countries[[i]][,33], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,90] <- NA
+data[,46+44] <- NA
 
-for (j in 2:10) {
-data[,90][j] <- case_when(
-   data$since ==  1 ~ lag(data[,33], 1),
-   data$since ==  j ~ data[,80+j]
+data[,46+44] <- case_when(
+   data[,35] ==  1 ~ data[,36+44],
+   data[,35] ==  2 ~ data[,37+44],
+   data[,35] ==  3 ~ data[,38+44],
+   data[,35] ==  4 ~ data[,39+44],
+   data[,35] ==  5 ~ data[,40+44],
+   data[,35] ==  6 ~ data[,41+44],
+   data[,35] ==  7 ~ data[,42+44],
+   data[,35] ==  8 ~ data[,43+44],
+   data[,35] ==  9 ~ data[,44+44],
+   data[,35] ==  10 ~ data[,45+44]
 )
-}
 
 # Calculate moving average for stddisp_gall (var23) 
 
@@ -265,20 +297,26 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+56+j] <- lag(rollapply(data_countries[[i]][,23], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+55+j] <- lag(rollapply(data_countries[[i]][,23], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,101] <- NA
+data[,46+55] <- NA
 
-for (j in 2:10) {
-data[,101][j] <- case_when(
-   data$since ==  1 ~ lag(data[,23], 1),
-   data$since ==  j ~ data[,91+j]
+data[,46+55] <- case_when(
+   data[,35] ==  1 ~ data[,36+55],
+   data[,35] ==  2 ~ data[,37+55],
+   data[,35] ==  3 ~ data[,38+55],
+   data[,35] ==  4 ~ data[,39+55],
+   data[,35] ==  5 ~ data[,40+55],
+   data[,35] ==  6 ~ data[,41+55],
+   data[,35] ==  7 ~ data[,42+55],
+   data[,35] ==  8 ~ data[,43+55],
+   data[,35] ==  9 ~ data[,44+55],
+   data[,35] ==  10 ~ data[,45+55]
 )
-}
 
 # Calculate moving average for pvoc (var29)
 
@@ -288,20 +326,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+67+j] <- lag(rollapply(data_countries[[i]][,29], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+66+j] <- lag(rollapply(data_countries[[i]][,29], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,112] <- NA
+data[,46+66] <- NA
 
-for (j in 2:10) {
-data[,112][j] <- case_when(
-   data$since ==  1 ~ lag(data[,29], 1),
-   data$since ==  j ~ data[,102+j]
+data[,46+66] <- case_when(
+   data[,35] ==  1 ~ data[,36+66],
+   data[,35] ==  2 ~ data[,37+66],
+   data[,35] ==  3 ~ data[,38+66],
+   data[,35] ==  4 ~ data[,39+66],
+   data[,35] ==  5 ~ data[,40+66],
+   data[,35] ==  6 ~ data[,41+66],
+   data[,35] ==  7 ~ data[,42+66],
+   data[,35] ==  8 ~ data[,43+66],
+   data[,35] ==  9 ~ data[,44+66],
+   data[,35] ==  10 ~ data[,45+66]
 )
-}
+
 # Calculate moving average for union (var12)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -310,20 +355,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+78+j] <- lag(rollapply(data_countries[[i]][,12], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+77+j] <- lag(rollapply(data_countries[[i]][,12], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,123] <- NA
+data[,46+77] <- NA
 
-for (j in 2:10) {
-data[,123][j] <- case_when(
-   data$since ==  1 ~ lag(data[,12], 1),
-   data$since ==  j ~ data[,113+j]
+data[,46+77] <- case_when(
+   data[,35] ==  1 ~ data[,36+77],
+   data[,35] ==  2 ~ data[,37+77],
+   data[,35] ==  3 ~ data[,38+77],
+   data[,35] ==  4 ~ data[,39+77],
+   data[,35] ==  5 ~ data[,40+77],
+   data[,35] ==  6 ~ data[,41+77],
+   data[,35] ==  7 ~ data[,42+77],
+   data[,35] ==  8 ~ data[,43+77],
+   data[,35] ==  9 ~ data[,44+77],
+   data[,35] ==  10 ~ data[,45+77]
 )
-}
+
 # Calculate moving average for fpop (var30)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -332,20 +384,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+89+j] <- lag(rollapply(data_countries[[i]][,30], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+88+j] <- lag(rollapply(data_countries[[i]][,30], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,134] <- NA
+data[,46+88] <- NA
 
-for (j in 2:10) {
-data[,134][j] <- case_when(
-   data$since ==  1 ~ lag(data[,30], 1),
-   data$since ==  j ~ data[,124+j]
+data[,46+88] <- case_when(
+   data[,35] ==  1 ~ data[,36+88],
+   data[,35] ==  2 ~ data[,37+88],
+   data[,35] ==  3 ~ data[,38+88],
+   data[,35] ==  4 ~ data[,39+88],
+   data[,35] ==  5 ~ data[,40+88],
+   data[,35] ==  6 ~ data[,41+88],
+   data[,35] ==  7 ~ data[,42+88],
+   data[,35] ==  8 ~ data[,43+88],
+   data[,35] ==  9 ~ data[,44+88],
+   data[,35] ==  10 ~ data[,45+88]
 )
-}
+
 # Calculate moving average for fempar (var10)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -354,20 +413,27 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+100+j] <- lag(rollapply(data_countries[[i]][,10], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+99+j] <- lag(rollapply(data_countries[[i]][,10], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,145] <- NA
+data[,46+99] <- NA
 
-for (j in 2:10) {
-data[,145][j] <- case_when(
-   data$since ==  1 ~ lag(data[,10], 1),
-   data$since ==  j ~ data[,135+j]
+data[,46+99] <- case_when(
+   data[,35] ==  1 ~ data[,36+99],
+   data[,35] ==  2 ~ data[,37+99],
+   data[,35] ==  3 ~ data[,38+99],
+   data[,35] ==  4 ~ data[,39+99],
+   data[,35] ==  5 ~ data[,40+99],
+   data[,35] ==  6 ~ data[,41+99],
+   data[,35] ==  7 ~ data[,42+99],
+   data[,35] ==  8 ~ data[,43+99],
+   data[,35] ==  9 ~ data[,44+99],
+   data[,35] ==  10 ~ data[,45+99]
 )
-}
+
 # Calculate moving average for unempl (var11)
 
 data_countries <- lapply(unique(data$country), function(x)
@@ -376,20 +442,26 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+111+j] <- lag(rollapply(data_countries[[i]][,11], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+110+j] <- lag(rollapply(data_countries[[i]][,11], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,156] <- NA
+data[,46+110] <- NA
 
-for (j in 2:10) {
-data[,156][j] <- case_when(
-   data$since ==  1 ~ lag(data[,11], 1),
-   data$since ==  j ~ data[,146+j]
+data[,46+110] <- case_when(
+   data[,35] ==  1 ~ data[,36+110],
+   data[,35] ==  2 ~ data[,37+110],
+   data[,35] ==  3 ~ data[,38+110],
+   data[,35] ==  4 ~ data[,39+110],
+   data[,35] ==  5 ~ data[,40+110],
+   data[,35] ==  6 ~ data[,41+110],
+   data[,35] ==  7 ~ data[,42+110],
+   data[,35] ==  8 ~ data[,43+110],
+   data[,35] ==  9 ~ data[,44+110],
+   data[,35] ==  10 ~ data[,45+100]
 )
-}
 
 # Calculate moving average for turnout (var13)
 
@@ -399,56 +471,60 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+111+j] <- lag(rollapply(data_countries[[i]][,13], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]][,35+121+j] <- lag(rollapply(data_countries[[i]][,13], j, FUN = mean, fill = NA, align = "right"),1)
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-data[,167] <- NA
+data[,46+121] <- NA
 
-for (j in 2:10) {
-data[,167][j] <- case_when(
-   data$since ==  1 ~ lag(data[,13], 1),
-   data$since ==  j ~ data[,157+j]
+data[,46+121] <- case_when(
+   data[,35] ==  1 ~ data[,36+121],
+   data[,35] ==  2 ~ data[,37+121],
+   data[,35] ==  3 ~ data[,38+121],
+   data[,35] ==  4 ~ data[,39+121],
+   data[,35] ==  5 ~ data[,40+121],
+   data[,35] ==  6 ~ data[,41+121],
+   data[,35] ==  7 ~ data[,42+121],
+   data[,35] ==  8 ~ data[,43+121],
+   data[,35] ==  9 ~ data[,44+121],
+   data[,35] ==  10 ~ data[,45+121]
 )
-}
 ```
 
-```{r}
 Now, we match these moving averages to redistribution observations by creating a new set of independent variables with values that correspond to the correct moving average based on the period of redistribution. There are three possible scenarios here:
 1) A redistribution observation is observed 1 year after the previous: the independent variable takes on its 1-year lagged value.
 2) A redistribution observation is observed n years ago, where n is [2,10]: the independent variable takes on its nth year moving average value.
 3) A redstribution observation is the first observation for the country: the indpeendnet variable takes on its 10th year moving average value. 
-```
 
-```{r}
 Social Spending: To estimate the model using the 2nd dependent variable (socspend), we create five-year moving averages for this variable and all independent variables to represent a slow-moving causal process.
 
-
-
-```
 # Replication
 
-rm(list=ls())
 ## Redistribution models
 
 Replicating results from Table 2:
+
+```{r}
+library('panelAR')
+
 ##Subsetting data and defining time series sequence:
 
 redistsample<- data[!is.na(data$redist),]
 redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
+```
 
 #Specification 1: 
 
-```{r}
+```{r eval = FALSE}
 out1 <- panelAR(redist ~ redist.lag + dvratio9050 + dvratio5010 + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out1))
 ```
 
 # Specification 2 (remove outliers)
 
-```{r}
+```{r eval = FALSE}
 #defining outliers 
 mod1.resid <- out1$residuals
 index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
@@ -461,13 +537,13 @@ print(summary(out2))
 ```
 
 # Specification 3 (no controls)
-```{r}
+```{r eval = FALSE}
 out3 <- panelAR(redist ~ ratio9050 + ratio5010 + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out3))
 ```
 
 # Specification 4 (no controls, no outliers)
-```{r}
+```{r eval = FALSE}
 #defining outliers 
 mod3.resid <- out3$residuals
 index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
@@ -479,13 +555,13 @@ print(summary(out4))
 ```
 
 #Specification 5 (Using skew as main inequality measure)
-```{r}
+```{r eval = FALSE}
 out5<- panelAR(redist ~ redist.lag + dvratio9010 + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out5))
 ```
 
 #Specification 6 (Skew as main measure, no outliers)
-```{r}
+```{r eval = FALSE}
 mod5.resid <- out5$residuals
 index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
 #creating a new subset without these observations
@@ -496,13 +572,13 @@ print(summary(out6))
 ```
 
 #Specification 7 (Skew as main measure, no controls, country fixed effects)
-```{r}
+```{r eval = FALSE}
 out7 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out7))	
 ```
 
 # Specification 8 (Skew as main measure, no controls, fixed effects without outliers)
-```{r}
+```{r eval = FALSE}
 mod7.resid <- out7$residuals
 index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
 #creating a new subset without these observations
@@ -516,21 +592,21 @@ print(summary(out8))
 
 For the next table, we use the same 8 specifications but replace our dependent variable with social spending (socspend) and the 5-year moving averages of the independent variable names. We use the full data set for these specifications, except when we drop the outliers.
 
-```{r}
+```{r eval = FALSE}
 #Creating the time series indicator for the main data set
 data$time<- unlist(by(data,data$id,function(x) seq(1:nrow(x))))
 ```
 
 #Specification 9: 
 
-```{r}
+```{r eval = FALSE}
 out9 <- panelAR(socspend ~ socspend.lag + maratio9050 + maratio5010 + maturnout + mafempar + mapropind + mapvoc + maunion + maunempl, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out9))
 ```
 
 # Specification 10 (remove outliers)
 
-```{r}
+```{r eval = FALSE}
 #defining outliers 
 mod9.resid <- out9$residuals
 index <- which(abs((mod9.resid-mean(mod9.resid))/sd(mod9.resid)) <= 1.5)
@@ -543,13 +619,13 @@ print(summary(out10))
 ```
 
 # Specification 11 (no controls)
-```{r}
+```{r eval = FALSE}
 out11 <- panelAR(socspend ~ maratio9050 + maratio5010 + as.factor(id), data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out11))
 ```
 
 # Specification 12 (no controls, no outliers)
-```{r}
+```{r eval = FALSE}
 #defining outliers 
 mod11.resid <- out11$residuals
 index <- which(abs((mod11.resid-mean(mod11.resid))/sd(mod11.resid)) <= 1.5)
@@ -561,13 +637,13 @@ print(summary(out12))
 ```
 
 #Specification 13 (Using skew as main inequality measure)
-```{r}
+```{r eval = FALSE}
 out13<- panelAR(socspend ~ socspend.lag + maratio9010 + maskew + maturnout + mafempar + mapropind + mapvoc + maunion + maunempl, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out13))
 ```
 
 #Specification 14 (Skew as main measure, no outliers)
-```{r}
+```{r eval = FALSE}
 mod13.resid <- out13$residuals
 index <- which(abs((mod13.resid-mean(mod13.resid))/sd(mod13.resid)) <= 1.5)
 #creating a new subset without these observations
@@ -578,13 +654,13 @@ print(summary(out14))
 ```
 
 #Specification 15 (Skew as main measure, no controls, country fixed effects)
-```{r}
+```{r eval = FALSE}
 out15 <- panelAR(socspend ~ maratio9010 + maskew + as.factor(id), data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out15))	
 ```
 
 # Specification 16 (Skew as main measure, no controls, fixed effects without outliers)
-```{r}
+```{r eval = FALSE}
 mod15.resid <- out15$residuals
 index <- which(abs((mod15.resid-mean(mod15.resid))/sd(mod15.resid)) <= 1.5)
 #creating a new subset without these observations
@@ -620,9 +696,9 @@ library('DeclareDesign')
 
 # X: take some parameters based on a simple model of X on Y
 
-modX <- lm(data$skew ~ data$redist)
+modX <- lm(data$redist ~ data$skew)
 a_X <- summary(modX)$coefficients["(Intercept)","Estimate"]
-b_X <- summary(modX)$coefficients["skew","Estimate"]
+b_X <- summary(modX)$coefficients["data$skew","Estimate"]
 sd_X <- 1
 
 rho_XY <- -.5 # Confounding 

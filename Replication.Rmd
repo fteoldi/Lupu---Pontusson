@@ -512,46 +512,46 @@ Social Spending: To estimate the model using the 2nd dependent variable (socspen
 data$ma_socspend <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
 
 # pratio9050s moving average (var)
-data$ma_pratio9050s <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_pratio9050s <- lag(data[,26], 1)+lag(data[,26], 2)+lag(data[,26], 3)+lag(data[,26], 4)+lag(data[,26], 5)/5
 
 # pratio5010s moving average (var)
-data$ma_pratio5010s <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_pratio5010s <- lag(data[,27], 1)+lag(data[,27], 2)+lag(data[,27], 3)+lag(data[,27], 4)+lag(data[,27], 5)/5
   
 # ratio9010s moving average (var)
-data$ma_pratio9010s <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_pratio9010s <- lag(data[,32], 1)+lag(data[,32], 2)+lag(data[,32], 3)+lag(data[,32], 4)+lag(data[,32], 5)/5
 
 # skews moving average (var)
-data$ma_skews <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_skews <- lag(data[,34], 1)+lag(data[,34], 2)+lag(data[,34], 3)+lag(data[,34], 4)+lag(data[,34], 5)/5
 
 # dreher moving average (var)
-data$ma_dreher <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_dreher <- lag(data[,21], 1)+lag(data[,21], 2)+lag(data[,21], 3)+lag(data[,21], 4)+lag(data[,21], 5)/5
 
 # pop65 moving average (var)
-data$ma_pop65 <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_pop65 <- lag(data[,15], 1)+lag(data[,15], 2)+lag(data[,15], 3)+lag(data[,15], 4)+lag(data[,15], 5)/5
 
 # stdpjoint moving average (var)
-data$ma_stdpjoint <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_stdpjoint <- lag(data[,22], 1)+lag(data[,22], 2)+lag(data[,22], 3)+lag(data[,22], 4)+lag(data[,22], 5)/5
 
 # stddisp_gall moving average (var)
-data$ma_stddisp_gall <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_stddisp_gall <- lag(data[,23], 1)+lag(data[,23], 2)+lag(data[,23], 3)+lag(data[,23], 4)+lag(data[,23], 5)/5
 
 # fempar moving average (var)
-data$ma_fempar <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_fempar <- lag(data[,10], 1)+lag(data[,10], 2)+lag(data[,10], 3)+lag(data[,10], 4)+lag(data[,10], 5)/5
 
 # unempl moving average (var)
-data$ma_unempl <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_unempl <- lag(data[,11], 1)+lag(data[,11], 2)+lag(data[,11], 3)+lag(data[,11], 4)+lag(data[,11], 5)/5
 
 # union moving average (var)
-data$ma_union <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_union <- lag(data[,12], 1)+lag(data[,12], 2)+lag(data[,12], 3)+lag(data[,12], 4)+lag(data[,12], 5)/5
 
 # turnout moving average (var)
-data$ma_turnout <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_turnout <- lag(data[,13], 1)+lag(data[,13], 2)+lag(data[,13], 3)+lag(data[,13], 4)+lag(data[,13], 5)/5
 
 # pvoc moving average (var)
-data$ma_pvoc <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_pvoc <- lag(data[,29], 1)+lag(data[,29], 2)+lag(data[,29], 3)+lag(data[,29], 4)+lag(data[,29], 5)/5
 
 # fpop moving average (var)
-data$ma_fpop <- lag(data[,20], 1)+lag(data[,20], 2)+lag(data[,20], 3)+lag(data[,20], 4)+lag(data[,20], 5)/5
+data$ma_fpop <- lag(data[,30], 1)+lag(data[,30], 2)+lag(data[,30], 3)+lag(data[,30], 4)+lag(data[,30], 5)/5
 
 
 names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_pratio9010s", "ma_skews", "ma_dreher", "ma_pop65", "ma_stdpjoint", "ma_stddisp_gall", "ma_fempar", "ma_unempl", "ma_union", "ma_turnout", "ma_pvoc", "ma_fpop")

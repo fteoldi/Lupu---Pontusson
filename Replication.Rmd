@@ -434,21 +434,82 @@ rm(list=ls())
 ## Redistribution models
 
 Replicating results from Table 2:
+##Subsetting data and defining time series sequence:
+
+redistsample<- data[!is.na(data$redist),]
+redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
+
+#Specification 1: 
+
 ```{r}
+out1 <- panelAR(redist ~ redist.lag + dvratio9050 + dvratio5010 + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out1))
+```
 
-#Subsetting the data to observations with non-missing redist values:
+# Specification 2 (remove outliers)
 
-Redistsample<- data[!is.na(data$redist),]
+```{r}
+#defining outliers 
+mod1.resid <- out1$residuals
+index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
+#creating a new subset without these observations
+redistsample_noout<- out1$model[index,]
 
+#running same model as spec1 with new subset
+out2 <- panelAR(redist ~ redist.lag + dvratio9050 + dvratio5010 + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out2))
+```
 
+# Specification 3 (no controls)
+```{r}
+out3 <- panelAR(redist ~ ratio9050 + ratio5010 + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out3))
+```
 
- cat("Subsetting data and calculating lagged DV...\n")
-+ 	cat("> LupPon <- LupPon[!is.na(LupPon$redist),]\n> LupPon$redist.lag <- unlist(by(LupPon,LupPon$id,function(x){c(NA,x[,\"redist\"][1:(length(x[,\"redist\"])-1)])}))\n> LupPon$time <- unlist(by(LupPon,LupPon$id,function(x) seq(1:nrow(x))))")
-+ 	LupPon <- LupPon[!is.na(LupPon$redist),]
-+ 	LupPon$redist.lag <- unlist(by(LupPon,LupPon$id,function(x){c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])}))
-+ 	LupPon$time <- unlist(by(LupPon,LupPon$id,function(x) seq(1:nrow(x))))
+# Specification 4 (no controls, no outliers)
+```{r}
+#defining outliers 
+mod3.resid <- out3$residuals
+index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
+#creating a new subset without these observations
+redistsample_noout<- out3$model[index,]
+#running same model as spec3 with new subset
+out4 <- panelAR(redist ~ ratio9050 + ratio5010 + as.factor(id), data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out4))
+```
 
+#Specification 5 (Using skew as main inequality measure)
+```{r}
+out5<- panelAR(redist ~ redist.lag + dvratio9010 + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+print(summary(out5))
+```
 
+#Specification 6 (Skew as main measure, no outliers)
+```{r}
+mod5.resid <- out5$residuals
+index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
+#creating a new subset without these observations
+redistsample_noout<- out5$model[index,]
+#running same model as spec5 with new subset
+out6<- panelAR(redist ~ redist.lag + dvratio9010 + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+print(summary(out6))
+```
+
+#Specification 7 (Skew as main measure, no controls, country fixed effects)
+```{r}
+out7 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out7))	
+```
+
+# Specification 8 (Skew as main measure, no controls, fixed effects without outliers)
+```{r}
+mod7.resid <- out7$residuals
+index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
+#creating a new subset without these observations
+redistsample_noout<- out7$model[index,]
+#running same model as spec7 with new subset
+out8 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+print(summary(out8))
 ```
 
 ## Social spending models

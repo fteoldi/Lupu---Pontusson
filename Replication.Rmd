@@ -744,6 +744,7 @@ redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nro
 #Specification 1: 
 
 ```{r}
+library('panelAR')
 out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out1)
 ```

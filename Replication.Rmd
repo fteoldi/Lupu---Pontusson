@@ -726,12 +726,18 @@ names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_p
 
 ```{r}
 # remove variables we don't need
-test <- data
 data <- data[,c(1:4, 37:38, 36, 40, 47, 45, 41:42, 43, 46 )]
 
-##Subsetting data and defining time series sequence:
-redistsample<- data[!is.na(data$redist),]
+# Subsetting data
+redistsample <- data[!is.na(data$redist),]
+
+# Sorting data
+redistsample <- redistsample[with(redistsample, order(id, year)),]
+
+# create lag
 redistsample$redist_lag <- unlist(by(redistsample,redistsample$id,function(x){c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])}))
+
+# set time series
 redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
 ```
 
@@ -741,6 +747,8 @@ redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nro
 out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out1)
 ```
+
+---
 
 # Specification 2 (remove outliers)
 

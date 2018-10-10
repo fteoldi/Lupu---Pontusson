@@ -161,17 +161,19 @@ data <- do.call("rbind", data_countries)
 data$dvratio9010 <- NA
 
 data[,46] <- case_when(
-   data[,35] ==  1 ~ data[,36],
-   data[,35] ==  2 ~ data[,37],
-   data[,35] ==  3 ~ data[,38],
-   data[,35] ==  4 ~ data[,39],
-   data[,35] ==  5 ~ data[,40],
-   data[,35] ==  6 ~ data[,41],
-   data[,35] ==  7 ~ data[,42],
-   data[,35] ==  8 ~ data[,43],
-   data[,35] ==  9 ~ data[,44],
-   data[,35] ==  10 ~ data[,45]
+   data[,35] %in%  1 ~ data[,36],
+   data[,35] %in%  2 ~ data[,37],
+   data[,35] %in%  3 ~ data[,38],
+   data[,35] %in%  4 ~ data[,39],
+   data[,35] %in%  5 ~ data[,40],
+   data[,35] %in%  6 ~ data[,41],
+   data[,35] %in%  7 ~ data[,42],
+   data[,35] %in%  8 ~ data[,43],
+   data[,35] %in%  9 ~ data[,44],
+   data[,35] %in%  10 ~ data[,45]
 )
+
+data[,46][is.na(data[,35]) & !is.na(data[,4])]
 
 # Calculate moving average for pratio9050 (var24)
 
@@ -559,21 +561,23 @@ names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_p
 
 
 
-
-
 # Replication
 
+```{r}
+# remove variables we don't need
+data <- data[,c(1:4, 37:38, 36, 40, 47, 45, 41:42, 43, 46 )]
 
 ##Subsetting data and defining time series sequence:
-
 redistsample<- data[!is.na(data$redist),]
+redistsample$redist_lag <- unlist(by(redistsample,redistsample$id,function(x){c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])}))
 redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
+```
 
 #Specification 1: 
 
 ```{r}
-out1 <- panelAR(redist ~ redist.lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-print(summary(out1))
+out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(out1)
 ```
 
 # Specification 2 (remove outliers)
@@ -586,8 +590,8 @@ index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
 redistsample_noout<- out1$model[index,]
 
 #running same model as spec1 with new subset
-out2 <- panelAR(redist ~ redist.lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-print(summary(out2))
+out2 <- panelAR(redist ~ lag(redist,1) + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(out2)
 ```
 
 # Specification 3 (no controls)
@@ -649,8 +653,8 @@ socspend.lag mapratio9050s mapratio5010s mapop65 mafempar maturnout mastddisp_ga
 ```{r}
 #Creating the time series indicator for the main data set
 data$time<- unlist(by(data,data$id,function(x) seq(1:nrow(x))))
-
-#Specification 9: 
+```
+Specification 9: 
 ```{r}
 out9 <- panelAR(socspend ~ socspend.lag + mapratio9050s + mapratio5010s + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher + gdpgrowth, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out9))

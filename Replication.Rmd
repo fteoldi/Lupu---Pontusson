@@ -43,19 +43,6 @@ data$stdpdisp_gall <- range01(data$disp_gall, na.rm = TRUE)
 
 Next, we interpolate missing values by first defining all the variables that need to be interpolated: `pratio9050`, `pratio5010`, `pratio9050s`, `pratio5010s`, `pforeign`, and `pvoc`. To interpolate missing values for each country, rather than for the dataset as a whole, we write a loop to define the object `data_countries` as a list of the data (with these aforementioned new variables) subsetted by each country.
 
-```{r}
-data$pratio9050 <- NA
-data$pratio5010 <- NA
-data$pratio9050s <- NA
-data$pratio5010s <- NA
-data$pforeign <- NA
-data$pvoc <- NA
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-```
-
 At this point, we can interpolate missing values for each variable. The `zoo` package allows use to use the function `na.approx` to linearly interpolate missing values. We use a set of loops that interpolates missing values indexed for each country, `i`, in our list of `data.frames`, `data_countries`, *for each variable*.[^1] Finally, we can use `rbind` to bind this new list into a single `data.frame`, and remove our list of `data.frames`.
 
 [^1]: This is what `data_countries[[i]][,y>23]` refers to, where `i` is each country and `y` represents the new variables. The 24th column is `pratio9050`, the 25th column `pratio5010`, and so on. Each of these are interpolated using the original variables, which are represented in `data_countries[[i]][,z>5]`, where `z` represents the original variables corresponding the new variables (i.e. `pratio9050` is interpolated using `ratio9050`, which is in the 5th column, and so on). Note that the index along which the function is operating is by year (`data_contries[[i]][,3]`) for *every* variable. In other words, we are replacing the variables of interest in each country for missing years.
@@ -63,43 +50,20 @@ At this point, we can interpolate missing values for each variable. The `zoo` pa
 ```{r}
 library('zoo')
 
-# Interpolate pratio9050 (data_countries[[i]][,24]) using ratio9050 (data_countries[[i]][,5])
+data_countries <- lapply(unique(data$country), function(x)
+  subset(data, data$country==x)
+)
 
 for (i in 1:length(data_countries)){
-data_countries[[i]][,24] <- na.approx(data_countries[[i]][,5], x = index(data_countries[[i]][,3], data_countries[[i]][,5]), na.rm = FALSE)
-}
-
-# Interpolate pratio5010 (data_countries[[i]][,25]) using ratio5010 (data_countries[[i]][,6])
-
-for (i in 1:length(data_countries)){
-data_countries[[i]][,25] <- na.approx(data_countries[[i]][,6], x = index(data_countries[[i]][,3], data_countries[[i]][,6]), na.rm = FALSE)
-}
-
-# Interpolate pratio9050s (data_countries[[i]][,26]) using ratio9050s (data_countries[[i]][,7])
-
-for (i in 1:length(data_countries)){
-data_countries[[i]][,26] <- na.approx(data_countries[[i]][,7], x = index(data_countries[[i]][,3], data_countries[[i]][,7]), na.rm = FALSE)
-}
-
-# Interpolate pratio5010s (data_countries[[i]][,27]) using ratio9050 (data_countries[[i]][,8])
-
-for (i in 1:length(data_countries)){
-data_countries[[i]][,27] <- na.approx(data_countries[[i]][,8], x = index(data_countries[[i]][,3], data_countries[[i]][,8]), na.rm = FALSE)
-}
-
-# Interpolate pforeign (data_countries[[i]][,28]) using foreign (data_countries[[i]][,16])
-
-for (i in 1:length(data_countries)){
-data_countries[[i]][,28] <- na.approx(data_countries[[i]][,16], x = index(data_countries[[i]][,3], data_countries[[i]][,16]), na.rm = FALSE)
-}
-
-# Interpolate pvoc (data_countries[[i]][,29]) using ratio9050 (data_countries[[i]][,19])
-
-for (i in 1:length(data_countries)){
-data_countries[[i]][,29] <- na.approx(data_countries[[i]][,19], x = index(data_countries[[i]][,3], data_countries[[i]][,19]), na.rm = FALSE)
+data_countries[[i]] <- cbind(data_countries[[i]], sapply(c(5:8, 16, 19), function(y)
+   na.approx(data_countries[[i]][,y], x = index(data_countries[[i]][,3], data_countries[[i]][,y]), na.rm = FALSE)
+  ))
 }
 
 data <- do.call("rbind", data_countries)
+
+names(data)[24:29] <- c("pratio9050", "pratio5010", "pratio9050s", "pratio5010s", "pforeign", "pvoc")
+
 rm(data_countries)
 ```
 

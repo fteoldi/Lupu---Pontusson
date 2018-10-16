@@ -1046,11 +1046,19 @@ disagdata_countries <- lapply(unique(disag_data$country), function(x)
   subset(disag_data, disag_data$country==x)
 )
 
+
+
+
+
+
 test <- disagdata_countries[[1]]
 test2 <- md.pattern(test)
 
 test3 <- mice(test,m=5,maxit=50,meth='pmm',seed=500)
 summary(mice(test,m=5,maxit=50,meth='pmm',seed=500))
+
+completedData <- complete(test3, 1)
+
 for (i in 1:length(disagdata_countries)){
 disagdata_countries[[i]] <- cbind(disagdata_countries[[i]], sapply(c(5:8), function(y)
    na.approx(disagdata_countries[[i]][,y], x = index(disagdata_countries[[i]][,3], disagdata_countries[[i]][,y]), na.rm = FALSE)

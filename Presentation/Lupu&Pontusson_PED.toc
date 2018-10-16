@@ -1,0 +1,8 @@
+\beamer@subsectionintoc {0}{1}{Aim of the paper}{3}{0}{0}
+\beamer@subsectionintoc {0}{2}{Design declaration}{5}{0}{0}
+\beamer@subsectionintoc {0}{3}{Empirical set-up and results}{6}{0}{0}
+\beamer@subsectionintoc {0}{4}{Robustness check}{9}{0}{0}
+\beamer@subsectionintoc {0}{5}{Conclusion}{10}{0}{0}
+\beamer@subsectionintoc {0}{6}{Extensions}{11}{0}{0}
+\beamer@subsectionintoc {0}{7}{Old slides}{12}{0}{0}
+\beamer@subsectionintoc {0}{8}{Critiques}{13}{0}{0}

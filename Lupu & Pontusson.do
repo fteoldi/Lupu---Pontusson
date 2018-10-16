@@ -3,11 +3,12 @@
 * Last revised March 2011
 
 * Replication by Filippo, Julian, and Zara
-
+clear
+use "/Users/zarariaz/Dropbox/Fall 2018/PED/Replication/LupPon_APSR.dta"
 set more 1
 set varabbrev off
 version 10
-ssc install std01
+*ssc install std01
 
 
 /*********************************************************************

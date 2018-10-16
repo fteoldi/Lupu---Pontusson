@@ -71,7 +71,7 @@ We generate an immigration measure, `fpop` which reflects the percentage of the 
 
 ```{r}
 data$pforeign <- data$pforeign*1000
-data$fpop <- data$pforeign/data$pop
+data$fpop <- (data$pforeign/data$pop)*100
 ```
 
 Our last data cleaning step before moving on to generating the averages for the redistribution models is to generate additional measures of inequality as defined by manipulations to our existing measures of inequality: `ratio9010`, `ratio9010s`, `skew`, and `skews`.
@@ -699,7 +699,7 @@ lupu_pontusson_2011_design <- population + potentials + estimand + estimator_1
 
 ```{r}
 # remove variables we don't need
-data1 <- data[,c(1:4, 37:38, 36, 40, 47, 45, 41:42, 43, 46 )]
+data_redist <- data[,c(1:4, 37:38, 36, 40, 47, 45, 41:42, 43, 46 )]
 
 # Subsetting data
 redistsample <- data[!is.na(data$redist),]
@@ -802,20 +802,20 @@ socspend.lag mapratio9050s mapratio5010s mapop65 mafempar maturnout mastddisp_ga
 ```{r}
 
 # remove variables we don't need
-data2 <- data[,c(1:3, 18, 20, 48:62 )]
+data_socspend <- data[,c(1:3, 18, 20, 48:62 )]
 
 # Sorting data
-data2 <- data2[with(data2, order(id, year)),]
+data_socspend  <- data_socspend [with(data_socspend , order(id, year)),]
 
 # create lag
-data2$socspend_lag <- unlist(by(data2,data2$id,function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
+data_socspend $socspend_lag <- unlist(by(data_socspend ,data_socspend $id,function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
 
 # set time series
-data2$time<- unlist(by(data2,data2$id,function(x) seq(1:nrow(x))))
+data_socspend $time<- unlist(by(data_socspend ,data_socspend $id,function(x) seq(1:nrow(x))))
 ```
 Specification 9: 
 ```{r}
-out9 <- panelAR(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data2, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, bound.rho=TRUE)
+out9 <- panelAR(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, bound.rho=TRUE)
 summary(out9)
 
 ```
@@ -836,7 +836,7 @@ summary(out10)
 
 # Specification 11 (no controls)
 ```{r}
-out11 <- panelAR(socspend ~ mapratio9050s + mapratio5010s +gdpgrowth + as.factor(id), data=data, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out11 <- panelAR(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=data_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out11)
 ```
 
@@ -848,13 +848,13 @@ index <- which(abs((mod11.resid-mean(mod11.resid))/sd(mod11.resid)) <= 1.5)
 #creating a new subset without these observations
 data_noout<- out11$model[index,]
 #running same model as spec11 with new subset
-out12 <- panelAR(socspend ~ mapratio9050s + mapratio5010s +gdpgrowth+ as.factor(id), data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out12 <- panelAR(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth+ as.factor(id), data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out12)
 ```
 
 #Specification 13 (Using skew as main inequality measure)
 ```{r}
-out13<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher + gdpgrowth, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out13<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out13)
 ```
 
@@ -863,15 +863,15 @@ summary(out13)
 mod13.resid <- out13$residuals
 index <- which(abs((mod13.resid-mean(mod13.resid))/sd(mod13.resid)) <= 1.5)
 #creating a new subset without these observations
-data_nooutt<- out13$model[index,]
+data_noout<- out13$model[index,]
 #running same model as spec13 with new subset
-out14<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher + gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out14<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out14)
 ```
 
 #Specification 15 (Skew as main measure, no controls, country fixed effects)
 ```{r}
-out15 <- panelAR(socspend ~ maratio9010s + maskews +gdpgrowth+ as.factor(id), data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out15 <- panelAR(socspend ~ ma_pratio9010s + ma_skews +gdpgrowth+ as.factor(id), data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out15)	
 ```
 
@@ -882,7 +882,7 @@ index <- which(abs((mod15.resid-mean(mod15.resid))/sd(mod15.resid)) <= 1.5)
 #creating a new subset without these observations
 data_noout<- out15$model[index,]
 #running same model as spec15 with new subset
-out16 <- panelAR(socspend ~ maratio9010s + maskews +gdpgrowth + as.factor(id), data=data_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out16 <- panelAR(socspend ~ ma_pratio9010s + ma_skews +gdpgrowth + as.factor(id), data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out16)
 ```
 
@@ -890,7 +890,7 @@ summary(out16)
 
 #Specification 17 (Redistribution as main DV, adding dvfpop)
 ```{r}
-out17 <- panelAR(redist ~ redist.lag + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl +mafpop, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out17 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out17)
 ```
 
@@ -904,14 +904,14 @@ index <- which(abs((mod17.resid-mean(mod17.resid))/sd(mod17.resid)) <= 1.5)
 redistsample_noout<- out17$model[index,]
 
 #running same model as spec17 with new subset
-out18 <- panelAR(redist ~ redist.lag + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl +mafpop, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out18 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010+  dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out18)
 ```
 
 # Specification 19 (Social spending as main DV, adding dvfpop)
 
 ```{r}
-out19<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +mafpop + gdpgrowth, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out19<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher +ma_fpop + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out19))
 ```
 
@@ -921,10 +921,10 @@ print(summary(out19))
 mod19.resid <- out19$residuals
 index <- which(abs((mod19.resid-mean(mod19.resid))/sd(mod19.resid)) <= 1.5)
 #creating a new subset without these observations
-redistsample_noout<- out19$model[index,]
+data_noout<- out19$model[index,]
 
 #running same model as spec19 with new subset
-out20<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +mafpop + gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out20<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher +ma_fpop + gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out20))
 ```
 
@@ -933,19 +933,28 @@ print(summary(out20))
 ```{r}
 #Creating a new data subset that excludes 1979 and earlier years
 
-recentyears<- subset(data, year>1979)
+recentyears <- subset(data, year>1979)
+
+recentyears <- recentyears[with(recentyears , order(id, year)),]
+
+#test <- test[order(test$id, test$year),]
+
+# set time series
+recentyears$time<- unlist(by(recentyears ,recentyears$id,function(x) seq(1:nrow(x))))
+
 ```
+
 #Specification 21 (IVs include skew, proportionality, and turnout)
 
 ```{r}
-out21<- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout , data=recentyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out21))
+out21<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out21)
 ```
 
 #Specification 22 (Adding globalization)
 
 ```{r}
-out22<- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout +madreher , data=recentyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out22<- panelAR(stdpjoint~ma_skews + mastddisp_gall + maturnout +madreher , data=recentyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out22))
 ```
 
@@ -986,7 +995,7 @@ print(summary(out26))
 
 # Specification 27 (Redistribution as main DV, adding dvstdpjoint)
 ```{r}
-out27 <- panelAR(redist ~ redist.lag + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl +dvfpop +dvstdpjoint, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out27 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop +dvstdpjoint, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 print(summary(out27))
 ```
 
@@ -1022,7 +1031,37 @@ redistsample_noout<- out29$model[index,]
 #running same model as spec29 with new subset
 out30<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +dvfpop  +dvstdpjoint +gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 print(summary(out30))
-
-# Robustness checks via design modification
+```
 
 # Extension
+```{r}
+
+#Loading data that contains disaggregated data for 6 categories of social spending
+disag_data <- read_dta(paste0(directory, "disag_spending.dta"))
+
+#Linearly interpolating missing values
+library('zoo')
+
+disagdata_countries <- lapply(unique(disag_data$country), function(x)
+  subset(disag_data, disag_data$country==x)
+)
+
+test <- disagdata_countries[[1]]
+test2 <- md.pattern(test)
+
+test3 <- mice(test,m=5,maxit=50,meth='pmm',seed=500)
+summary(mice(test,m=5,maxit=50,meth='pmm',seed=500))
+for (i in 1:length(disagdata_countries)){
+disagdata_countries[[i]] <- cbind(disagdata_countries[[i]], sapply(c(5:8), function(y)
+   na.approx(disagdata_countries[[i]][,y], x = index(disagdata_countries[[i]][,3], disagdata_countries[[i]][,y]), na.rm = FALSE)
+  ))
+}
+
+disag_data <- do.call("rbind", disagdata_countries)
+
+#names(disag_data)[9:12] <- c("fambenefits_v2", "incapacity_v2", "pubspending_labor_v2", "public_unemp_v2")
+
+#rm(disagdata_countries)
+
+```
+

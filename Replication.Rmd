@@ -13,8 +13,7 @@ First we open the dataset with the `haven` package, which allows us to open .dta
 
 ```{r}
 library('haven')
-directory <- "~/Documents/GitHub/Lupu---Pontusson/"
-data <- read_dta(paste0(directory, "LupPon_APSR.dta"))
+data <- read_dta("LupPon_APSR.dta")
 ```
 
 ## Data cleaning

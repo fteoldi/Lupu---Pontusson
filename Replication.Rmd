@@ -77,9 +77,9 @@ Our last data cleaning step before moving on to generating the averages for the 
 
 ```{r}
 data$ratio9010 <- data$pratio9050*data$pratio5010
-data$ratio9010s <- data$pratio9050s*data$pratio5010s #not extrapolated
+data$ratio9010s <- data$pratio9050s*data$pratio5010s # not extrapolated
 data$skew <- data$pratio9050/data$pratio5010
-data$skews <- data$pratio9050s/data$pratio5010s #not extrapolated
+data$skews <- data$pratio9050s/data$pratio5010s # not extrapolated
 ```
 
 Because data on redistribution are unequally spaced for the period of the study, the authors use a time series cross sectional model where the indepdent variables are averaged across the period since the last redistribution observation. 
@@ -99,7 +99,7 @@ for (i in 1:length(data_countries)){
 
 data <- do.call("rbind", data_countries)
 names(data)[35] <- "since"
-rm(data_countries)
+rm(data_countries, nona)
 ```
 
 Now we can calculate the moving averages:

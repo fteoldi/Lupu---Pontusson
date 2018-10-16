@@ -107,21 +107,32 @@ Now we can calculate the moving averages:
 ```{r}
 library('dplyr')
 
-# Calculate moving average for ratio9010 (var31)
-
 data_countries <- lapply(unique(data$country), function(x)
   subset(data, data$country==x)
 )
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]][,35+j] <- lag(rollapply(data_countries[[i]][,31], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]] <- cbind(data_countries[[i]], sapply(c(31, 24, 25, 22, 33, 23, 29, 12, 30, 10, 11, 13), function(a)
+        lag(rollapply(data_countries[[i]][,a], j, FUN = mean, fill = NA, align = "right"),1)
+    ))
   }
 }
 
 data <- do.call("rbind", data_countries)
 
-for(x in 37:ncol(data)){
+# reorder columns
+
+temp <- data[,c(1:35, 35+1, 35+1+12, 35+1+24, 35+1+36, 35+1+48, 35+1+60, 35+1+72, 35+1+84, 35+1+96, 35+1+108)]
+
+for (i in 2:12) {
+  temp <- cbind(temp, data[,c(35+i, 35+i+12, 35+i+24, 35+i+36, 35+i+48, 35+i+60, 35+i+72, 35+i+84, 35+i+96, 35+i+108)])
+}
+
+data <- temp
+rm(temp)
+
+for(x in 37:45){
     # Nested loop starts from first row
     for(y in 2:nrow(data)){
         # Check for NA
@@ -131,497 +142,41 @@ for(x in 37:ncol(data)){
     }
 }
 
-data$dvratio9010 <- NA
-
-data[,46] <- case_when(
-  data[,35] %in% 1 ~ data[,36],
-  data[,35] %in% 2 ~ data[,37],
-  data[,35] %in% 3 ~ data[,38],
-  data[,35] %in% 4 ~ data[,39],
-  data[,35] %in% 5 ~ data[,40],
-  data[,35] %in% 6 ~ data[,41],
-  data[,35] %in% 7 ~ data[,42],
-  data[,35] %in% 8 ~ data[,43],
-  data[,35] %in% 9 ~ data[,44],
-  data[,35] %in% 10 ~ data[,45]
-)
-
-data[,46][is.na(data[,35]) & !is.na(data[,4])] <- data[,45][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:35,46)]
-
-# Calculate moving average for pratio9050 (var24)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+1+j] <- lag(rollapply(data_countries[[i]][,24], j, FUN = mean, fill = NA, align = "right"),1)
+for(i in c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110)){
+  for(x in c(37:45+i)){
+      # Nested loop starts from first row
+      for(y in 2:nrow(data)){
+          # Check for NA
+          if(is.na(data[y,x])){
+              data[y,x] <- data[y,x-1]
+          }
+      }
   }
 }
 
-data <- do.call("rbind", data_countries)
+data[,156:167] <- NA
 
-for(x in c(37+1):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
+for (i in 0:11) {
+  data[,156+i] <- case_when(
+    data[,35] %in% 1 ~ data[,36+i*10],
+    data[,35] %in% 2 ~ data[,37+i*10],
+    data[,35] %in% 3 ~ data[,38+i*10],
+    data[,35] %in% 4 ~ data[,39+i*10],
+    data[,35] %in% 5 ~ data[,40+i*10],
+    data[,35] %in% 6 ~ data[,41+i*10],
+    data[,35] %in% 7 ~ data[,42+i*10],
+    data[,35] %in% 8 ~ data[,43+i*10],
+    data[,35] %in% 9 ~ data[,44+i*10],
+    data[,35] %in% 10 ~ data[,45+i*10]
+  )
+  
+  data[,156+i][is.na(data[,35]) & !is.na(data[,4])] <- data[,45][is.na(data[,35]) & !is.na(data[,4])]
+  
 }
 
-data$dvpratio9050 <- NA
+data <- data[,c(1:35,156:167)]
 
-data[,46+1] <- case_when(
-  data[,35] %in% 1 ~ data[,36+1],
-  data[,35] %in% 2 ~ data[,37+1],
-  data[,35] %in% 3 ~ data[,38+1],
-  data[,35] %in% 4 ~ data[,39+1],
-  data[,35] %in% 5 ~ data[,40+1],
-  data[,35] %in% 6 ~ data[,41+1],
-  data[,35] %in% 7 ~ data[,42+1],
-  data[,35] %in% 8 ~ data[,43+1],
-  data[,35] %in% 9 ~ data[,44+1],
-  data[,35] %in% 10 ~ data[,45+1]
-)
-
-data[,46+1][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+1][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+1),46+1)]
-
-# Calculate moving average for pratio5010 (var25)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+2+j] <- lag(rollapply(data_countries[[i]][,25], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+2):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvpratio5010 <- NA
-
-data[,46+2] <- case_when(
-  data[,35] %in% 1 ~ data[,36+2],
-  data[,35] %in% 2 ~ data[,37+2],
-  data[,35] %in% 3 ~ data[,38+2],
-  data[,35] %in% 4 ~ data[,39+2],
-  data[,35] %in% 5 ~ data[,40+2],
-  data[,35] %in% 6 ~ data[,41+2],
-  data[,35] %in% 7 ~ data[,42+2],
-  data[,35] %in% 8 ~ data[,43+2],
-  data[,35] %in% 9 ~ data[,44+2],
-  data[,35] %in% 10 ~ data[,45+2]
-)
-
-data[,46+2][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+2][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+2),46+2)]
-
-# Calculate moving average for stdpjoint (var22)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+3+j] <- lag(rollapply(data_countries[[i]][,22], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+3):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvstdpjoint <- NA
-
-data[,46+3] <- case_when(
-  data[,35] %in% 1 ~ data[,36+3],
-  data[,35] %in% 2 ~ data[,37+3],
-  data[,35] %in% 3 ~ data[,38+3],
-  data[,35] %in% 4 ~ data[,39+3],
-  data[,35] %in% 5 ~ data[,40+3],
-  data[,35] %in% 6 ~ data[,41+3],
-  data[,35] %in% 7 ~ data[,42+3],
-  data[,35] %in% 8 ~ data[,43+3],
-  data[,35] %in% 9 ~ data[,44+3],
-  data[,35] %in% 10 ~ data[,45+3]
-)
-
-data[,46+3][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+3][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+3),46+3)]
-
-# Calculate moving average for skew (var33)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+4+j] <- lag(rollapply(data_countries[[i]][,33], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+4):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvskew <- NA
-
-data[,46+4] <- case_when(
-  data[,35] %in% 1 ~ data[,36+4],
-  data[,35] %in% 2 ~ data[,37+4],
-  data[,35] %in% 3 ~ data[,38+4],
-  data[,35] %in% 4 ~ data[,39+4],
-  data[,35] %in% 5 ~ data[,40+4],
-  data[,35] %in% 6 ~ data[,41+4],
-  data[,35] %in% 7 ~ data[,42+4],
-  data[,35] %in% 8 ~ data[,43+4],
-  data[,35] %in% 9 ~ data[,44+4],
-  data[,35] %in% 10 ~ data[,45+4]
-)
-
-data[,46+4][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+4][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+4),46+4)]
-
-# Calculate moving average for stddisp_gall (var23) 
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+5+j] <- lag(rollapply(data_countries[[i]][,23], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+5):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvstddisp_gall <- NA
-
-data[,46+5] <- case_when(
-  data[,35] %in% 1 ~ data[,36+5],
-  data[,35] %in% 2 ~ data[,37+5],
-  data[,35] %in% 3 ~ data[,38+5],
-  data[,35] %in% 4 ~ data[,39+5],
-  data[,35] %in% 5 ~ data[,40+5],
-  data[,35] %in% 6 ~ data[,41+5],
-  data[,35] %in% 7 ~ data[,42+5],
-  data[,35] %in% 8 ~ data[,43+5],
-  data[,35] %in% 9 ~ data[,44+5],
-  data[,35] %in% 10 ~ data[,45+5]
-)
-
-data[,46+5][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+5][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+5),46+5)]
-
-# Calculate moving average for pvoc (var29)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+6+j] <- lag(rollapply(data_countries[[i]][,29], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+6):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvpvoc <- NA
-
-data[,46+6] <- case_when(
-  data[,35] %in% 1 ~ data[,36+6],
-  data[,35] %in% 2 ~ data[,37+6],
-  data[,35] %in% 3 ~ data[,38+6],
-  data[,35] %in% 4 ~ data[,39+6],
-  data[,35] %in% 5 ~ data[,40+6],
-  data[,35] %in% 6 ~ data[,41+6],
-  data[,35] %in% 7 ~ data[,42+6],
-  data[,35] %in% 8 ~ data[,43+6],
-  data[,35] %in% 9 ~ data[,44+6],
-  data[,35] %in% 10 ~ data[,45+6]
-)
-
-data[,46+6][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+6][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+6),46+6)]
-
-# Calculate moving average for union (var12)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+7+j] <- lag(rollapply(data_countries[[i]][,12], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+7):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvunion <- NA
-
-data[,46+7] <- case_when(
-  data[,35] %in% 1 ~ data[,36+7],
-  data[,35] %in% 2 ~ data[,37+7],
-  data[,35] %in% 3 ~ data[,38+7],
-  data[,35] %in% 4 ~ data[,39+7],
-  data[,35] %in% 5 ~ data[,40+7],
-  data[,35] %in% 6 ~ data[,41+7],
-  data[,35] %in% 7 ~ data[,42+7],
-  data[,35] %in% 8 ~ data[,43+7],
-  data[,35] %in% 9 ~ data[,44+7],
-  data[,35] %in% 10 ~ data[,45+7]
-)
-
-data[,46+7][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+7][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+7),46+7)]
-
-# Calculate moving average for fpop (var30)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+8+j] <- lag(rollapply(data_countries[[i]][,30], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+8):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvfpop <- NA
-
-data[,46+8] <- case_when(
-  data[,35] %in% 1 ~ data[,36+8],
-  data[,35] %in% 2 ~ data[,37+8],
-  data[,35] %in% 3 ~ data[,38+8],
-  data[,35] %in% 4 ~ data[,39+8],
-  data[,35] %in% 5 ~ data[,40+8],
-  data[,35] %in% 6 ~ data[,41+8],
-  data[,35] %in% 7 ~ data[,42+8],
-  data[,35] %in% 8 ~ data[,43+8],
-  data[,35] %in% 9 ~ data[,44+8],
-  data[,35] %in% 10 ~ data[,45+8]
-)
-
-data[,46+8][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+8][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+8),46+8)]
-
-# Calculate moving average for fempar (var10)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+9+j] <- lag(rollapply(data_countries[[i]][,10], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+9):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvfempar <- NA
-
-data[,46+9] <- case_when(
-  data[,35] %in% 1 ~ data[,36+9],
-  data[,35] %in% 2 ~ data[,37+9],
-  data[,35] %in% 3 ~ data[,38+9],
-  data[,35] %in% 4 ~ data[,39+9],
-  data[,35] %in% 5 ~ data[,40+9],
-  data[,35] %in% 6 ~ data[,41+9],
-  data[,35] %in% 7 ~ data[,42+9],
-  data[,35] %in% 8 ~ data[,43+9],
-  data[,35] %in% 9 ~ data[,44+9],
-  data[,35] %in% 10 ~ data[,45+9]
-)
-
-data[,46+9][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+9][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+9),46+9)]
-
-# Calculate moving average for unempl (var11)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+10+j] <- lag(rollapply(data_countries[[i]][,11], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+10):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvunempl <- NA
-
-data[,46+10] <- case_when(
-  data[,35] %in% 1 ~ data[,36+10],
-  data[,35] %in% 2 ~ data[,37+10],
-  data[,35] %in% 3 ~ data[,38+10],
-  data[,35] %in% 4 ~ data[,39+10],
-  data[,35] %in% 5 ~ data[,40+10],
-  data[,35] %in% 6 ~ data[,41+10],
-  data[,35] %in% 7 ~ data[,42+10],
-  data[,35] %in% 8 ~ data[,43+10],
-  data[,35] %in% 9 ~ data[,44+10],
-  data[,35] %in% 10 ~ data[,45+10]
-)
-
-data[,46+10][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+10][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+10),46+10)]
-
-# Calculate moving average for turnout (var13)
-
-data_countries <- lapply(unique(data$country), function(x)
-  subset(data, data$country==x)
-)
-
-for (i in 1:length(data_countries)){
-  for (j in 1:10) {
-    data_countries[[i]][,35+11+j] <- lag(rollapply(data_countries[[i]][,13], j, FUN = mean, fill = NA, align = "right"),1)
-  }
-}
-
-data <- do.call("rbind", data_countries)
-
-for(x in c(37+11):ncol(data)){
-    # Nested loop starts from first row
-    for(y in 2:nrow(data)){
-        # Check for NA
-        if(is.na(data[y,x])){
-            data[y,x] <- data[y,x-1]
-        }
-    }
-}
-
-data$dvturnout <- NA
-
-data[,46+11] <- case_when(
-  data[,35] %in% 1 ~ data[,36+11],
-  data[,35] %in% 2 ~ data[,37+11],
-  data[,35] %in% 3 ~ data[,38+11],
-  data[,35] %in% 4 ~ data[,39+11],
-  data[,35] %in% 5 ~ data[,40+11],
-  data[,35] %in% 6 ~ data[,41+11],
-  data[,35] %in% 7 ~ data[,42+11],
-  data[,35] %in% 8 ~ data[,43+11],
-  data[,35] %in% 9 ~ data[,44+11],
-  data[,35] %in% 10 ~ data[,45+11]
-)
-
-data[,46+11][is.na(data[,35]) & !is.na(data[,4])] <- data[,45+11][is.na(data[,35]) & !is.na(data[,4])]
-
-data <- data[,c(0:(35+11),46+11)]
+names(data)[36:47] <- c("dvratio9010", "dvpratio9050", "dvpratio5010", "dvstdpjoint", "dvskew", "dvstddisp_gall", "dvpvoc", "dvunion", "dvfpop", "dvfempar", "dvunempl", "dvturnout")
 
 rm(data_countries)
 ```

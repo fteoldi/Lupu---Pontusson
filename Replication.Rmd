@@ -1066,6 +1066,7 @@ disagdata_countries[[i]] <- cbind(disagdata_countries[[i]], sapply(c(5:8), funct
 }
 
 disag_data <- do.call("rbind", disagdata_countries)
+lklkl
 
 #names(disag_data)[9:12] <- c("fambenefits_v2", "incapacity_v2", "pubspending_labor_v2", "public_unemp_v2")
 

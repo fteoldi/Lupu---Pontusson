@@ -440,9 +440,9 @@ out16 <- panelAR(socspend ~ ma_pratio9010s + ma_skews +gdpgrowth + as.factor(id)
 summary(out16)
 ```
 
-##Immigration Models (Table 4)
+## Immigration Models (Table 4)
 
-#Specification 17 (Redistribution as main DV, adding dvfpop)
+# Specification 17 (Redistribution as main DV, adding dvfpop)
 ```{r}
 out17 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out17)
@@ -466,7 +466,7 @@ summary(out18)
 
 ```{r}
 out19<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher +ma_fpop + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out19))
+summary(out19)
 ```
 
 #Specification 20 (removing outliers)
@@ -479,7 +479,7 @@ data_noout<- out19$model[index,]
 
 #running same model as spec19 with new subset
 out20<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher +ma_fpop + gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out20))
+summary(out20)
 ```
 
 ## Partisanship (Table 5)
@@ -495,7 +495,6 @@ recentyears <- recentyears[with(recentyears , order(id, year)),]
 
 # set time series
 recentyears$time<- unlist(by(recentyears ,recentyears$id,function(x) seq(1:nrow(x))))
-
 ```
 
 #Specification 21 (IVs include skew, proportionality, and turnout)
@@ -508,54 +507,61 @@ summary(out21)
 #Specification 22 (Adding globalization)
 
 ```{r}
-out22<- panelAR(stdpjoint~ma_skews + mastddisp_gall + maturnout +madreher , data=recentyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out22))
+out22<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout +ma_dreher , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none', rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out22)
 ```
 
 #Specification 23 (Adding immigration)
 
 ```{r}
-out23<- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout +madreher +mafpop , data=recentyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out23))
+out23<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout + ma_dreher + ma_fpop , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out23)
 ```
 
 ```{r}
 #creating a new data frame with observations before 1980
-olderyears<- subset(data, year<1980)
+olderyears <- subset(data, year<1980)
 
-aggdata <-aggregate(stdpjoint, skew, stddisp_gall, dreher, fpop, turnout, by=list(id),mean)
+# creating aggdata gives an error
+# aggdata <- aggregate(c(olderyears$stdpjoint, olderyears$skew, olderyears$stddisp_gall, olderyears$dreher, olderyears$fpop, olderyears$turnout), by=list(id),mean)
 ```
 
 #Specification 24 
 
-```{r}
-out24 <- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout , data=olderyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out24))
+```{r eval = FALSE}
+# not working
+out24 <- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout, data=olderyears, panelVar='id', timeVar='year', autoCorr='none', panelCorrMethod='none',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out24)
 ```
 
 #Specification 25 (Specification 22 without outliers)
-```{r}
-out25 <- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout +madreher , data=olderyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out25))
+```{r eval = FALSE}
+# not working
+out25 <- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout +madreher , data=olderyears, panelVar='id', timeVar='year', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out25)
 ```
 
 #Specification 26 (Specification 23 without outliers)
-```{r}
+```{r eval = FALSE}
+# not working
 out26 <- panelAR(stdpjoint~maskews + mastddisp_gall + maturnout +madreher +mafpop , data=olderyears, panelVar='id', timeVar='time', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out26))
+summary(out26)
 ```
 
 ##Redistribution and Social Spending Models with partisanship measures (Table 6)
 
 # Specification 27 (Redistribution as main DV, adding dvstdpjoint)
-```{r}
+```{r eval = FALSE}
+# not matching
 out27 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop +dvstdpjoint, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-print(summary(out27))
+summary(out27)
 ```
 
 # Specification 28 (remove outliers)
 
-```{r}
+```{r eval = FALSE}
+# not working
+
 #defining outliers 
 mod27.resid <- out27$residuals
 index <- which(abs((mod27.resid-mean(mod27.resid))/sd(mod27.resid)) <= 1.5)
@@ -564,19 +570,21 @@ redistsample_noout<- out27$model[index,]
 
 #running same model as spec17 with new subset
 out28 <- panelAR(redist ~ redist.lag + dvskew + dvturnout + dvfempar + dvpropind + dvpvoc + dvunion + dvunempl +dvfpop +dvstdpjoint, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-print(summary(out28))
+summary(out28)
 ```
 
 #Specification 29 (Social spending as main DV, adding dvstdpjoint)
 
-```{r}
-out29<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +dvfpop +dvstdpjoint + gdpgrowth, data=data, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out29))
+```{r eval = FALSE}
+# not working
+out29<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +dvfpop +dvstdpjoint + gdpgrowth, data=data, panelVar='id', timeVar='year', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(out29)
 ```
 
 #Specification 30 (removing outliers)
 
-```{r}
+```{r eval = FALSE}
+# not working
 #defining outliers 
 mod29.resid <- out29$residuals
 index <- which(abs((mod29.resid-mean(mod29.resid))/sd(mod29.resid)) <= 1.5)
@@ -584,11 +592,12 @@ index <- which(abs((mod29.resid-mean(mod29.resid))/sd(mod29.resid)) <= 1.5)
 redistsample_noout<- out29$model[index,]
 #running same model as spec29 with new subset
 out30<- panelAR(socspend ~ socspend.lag + maratio9010s + maskews + mapop65+ maturnout + mafempar + mastdisp_gall + mapvoc + maunion + maunempl + madreher +dvfpop  +dvstdpjoint +gdpgrowth, data=data_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-print(summary(out30))
+summary(out30)
 ```
 
 # Extension
-```{r}
+```{r eval = FALSE}
+# not working
 
 #Loading data that contains disaggregated data for 6 categories of social spending
 disag_data <- read_dta(paste0(directory, "disag_spending.dta"))

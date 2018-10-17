@@ -4,32 +4,37 @@ author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
 date: "October 23rd, 2018"
 output: pdf_document
 ---
-
 ```{r include=FALSE}
-knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
-First we open the dataset with the `haven` package, which allows us to open .dta files.
+This .Rmd file replicates the analyses in **Lupu, N. and Pontusson, J., (2011), The Structure of Inequality and the Politics of Redistribution**. It requires that the following packages be installed: (1) `haven`, (2) `zoo`, (3) `dplyr`, and (4) `panelAR`. If you do not have these packages installed, use `install.packages()` to install them.
+
+# Data cleaning
+
+## Loading the dataset and generating new variables
+
+First we open the dataset and assign it to object `data` with the `haven` package, which allows us to open .dta files. The dataset can be downloaded at http://www.noamlupu.com/LupPon_APSR.dta.
 
 ```{r}
 library('haven')
 data <- read_dta("LupPon_APSR.dta")
 ```
 
-Then the authors redefine their disproportionality measures, `disp_gall` as inverse disproportionality measures:
+With the data open, we can begin by changing the values of certain variables so that they match the values in the paper. To begin, the authors redefine their disproportionality measures, `disp_gall` as inverse disproportionality measures, which can be represented by the "old" variable multiplied by -1.
 
 ```{r}
 data$disp_gall <- data$disp_gall*-1
 ```
 
-Then the variables female participation, `fempar`, and annual net union density, `union` are multiplied by 100 so that they are rescaled.
+The variable for female participation, `fempar`, and for annual net union density, `union` are multiplied by 100 so that they are rescaled.
 
 ```{r}
 data$fempar <- data$fempar*100
 data$union <- data$union*100
 ```
 
-The variables `pjoint` and `disp_gall`, are partisanship and disproportionality, respectively. These are standardized from [0,1]. To do so, we are defining a function, `range01`, which standardizes the range of a variable such that it takes on values from 0 to 1.
+The variables `pjoint` and `disp_gall`, are partisanship and disproportionality, respectively. These are standardized from [0,1]. To do so, we are defining a function, `range01`, which standardizes the range of a variable such that it takes on values from 0 to 1, and applying `range01` to the two variables.
 
 ```{r}
 range01 <- function(x, ...) {(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
@@ -38,31 +43,40 @@ data$stdpjoint <- range01(data$pjoint, na.rm = TRUE)
 data$stdpdisp_gall <- range01(data$disp_gall, na.rm = TRUE)
 ```
 
-Next, we interpolate missing values by first defining all the variables that need to be interpolated: `pratio9050`, `pratio5010`, `pratio9050s`, `pratio5010s`, `pforeign`, and `pvoc`. To interpolate missing values for each country, rather than for the dataset as a whole, we write a loop to define the object `data_countries` as a list of the data (with these aforementioned new variables) subsetted by each country.
+## Interpolation of missing values
 
-At this point, we can interpolate missing values for each variable. The `zoo` package allows use to use the function `na.approx` to linearly interpolate missing values. We use a set of loops that interpolates missing values indexed for each country, `i`, in our list of `data.frames`, `data_countries`, *for each variable*.[^1] Finally, we can use `rbind` to bind this new list into a single `data.frame`, and remove our list of `data.frames`.
+Next, we interpolate missing values in the data. The variables that we are defining as the "new" interpolated variables are: `pratio9050` (the 90-50 ratio, extrapolated), `pratio5010` (the 50-10 ratio, extrapolated), `pratio9050s` (the 90-50 ratio, not extrapolated), `pratio5010s` (the 50-10 ratio, not extrapolated), `pforeign` (the percentage of foreign-born residents in the population) and `pvoc` (a measure of vocational training).
+
+Missing values are interpolated *for each country*, rather than for the dataset as a whole, so we write a loop to define the object `data_countries` as a list of the data (with these aforementioned new variables) subsetted by each country.
+
+The `zoo` package allows use to use the function `na.approx` to linearly interpolate missing values for each variable. We use a set of loops that interpolates missing values indexed for each country, `i`, in our list of data.frames, `data_countries`, *for each variable*.[^1] Finally, we can use `rbind` to bind this new list into a single `data.frame`, and remove our list of data.frames, `data_countries`.
 
 [^1]: This is what `data_countries[[i]][,y>23]` refers to, where `i` is each country and `y` represents the new variables. The 24th column is `pratio9050`, the 25th column `pratio5010`, and so on. Each of these are interpolated using the original variables, which are represented in `data_countries[[i]][,z>5]`, where `z` represents the original variables corresponding the new variables (i.e. `pratio9050` is interpolated using `ratio9050`, which is in the 5th column, and so on). Note that the index along which the function is operating is by year (`data_contries[[i]][,3]`) for *every* variable. In other words, we are replacing the variables of interest in each country for missing years.
 
 ```{r}
-library('zoo')
-
 data_countries <- lapply(unique(data$country), function(x)
   subset(data, data$country==x)
 )
 
+library('zoo')
+
 for (i in 1:length(data_countries)){
 data_countries[[i]] <- cbind(data_countries[[i]], sapply(c(5:8, 16, 19), function(y)
-   na.approx(data_countries[[i]][,y], x = index(data_countries[[i]][,3], data_countries[[i]][,y]), na.rm = FALSE)
+   na.approx(data_countries[[i]][,y], 
+             x = index(data_countries[[i]][,3], 
+                       data_countries[[i]][,y]), na.rm = FALSE)
   ))
 }
 
 data <- do.call("rbind", data_countries)
 
-names(data)[24:29] <- c("pratio9050", "pratio5010", "pratio9050s", "pratio5010s", "pforeign", "pvoc")
+names(data)[24:29] <- c("pratio9050", "pratio5010", "pratio9050s",
+                        "pratio5010s", "pforeign", "pvoc")
 
 rm(data_countries)
 ```
+
+## Generating new variables with interpolated variables
 
 We generate an immigration measure, `fpop` which reflects the percentage of the population that is foreign-born by using our interpolated measure `pforeign`, multiplying it by 1000, and dividing this result by `pop`, which is total population.
 
@@ -71,7 +85,7 @@ data$pforeign <- data$pforeign*1000
 data$fpop <- (data$pforeign/data$pop)*100
 ```
 
-Our last data cleaning step before moving on to generating the averages for the redistribution models is to generate additional measures of inequality as defined by manipulations to our existing measures of inequality: `ratio9010`, `ratio9010s`, `skew`, and `skews`.
+Our last variable-generating step before moving on to calculating the averages for the redistribution models is to create additional measures of inequality as defined by manipulations to our existing measures of inequality: `ratio9010`, `ratio9010s`, `skew`, and `skews`.
 
 ```{r}
 data$ratio9010 <- data$pratio9050*data$pratio5010
@@ -80,9 +94,11 @@ data$skew <- data$pratio9050/data$pratio5010
 data$skews <- data$pratio9050s/data$pratio5010s # not extrapolated
 ```
 
-Because data on redistribution are unequally spaced for the period of the study, the authors use a time series cross sectional model where the indepdent variables are averaged across the period since the last redistribution observation. 
+## Calculate moving averages for redistribution models
 
-We generate moving averages for the redistribution models by using a series of loops. First we generate the `since` variable, which represents the years since the last redistribution, `redist`, for each country. We remake our list of the subset of countries as before and define `since` (`data_countries[[i]][35]`) accordingly by creating a new logical vector, `nona`, that tells us when the `redist` variable is and is not defined for each country.
+Because data on redistribution are unequally spaced for the period of the study, the authors use a time-series cross-sectional model where the indepdent variables are averaged across the period since the last redistribution observation.
+
+First, we generate the `since` variable, which as mentioned, represents the years since the last redistribution, `redist`, for each country `i`. We remake our list of the subset of countries as before and define `since` (the 35th column in each data.frame `i` of `data_countries`, or `data_countries[[i]][35]`) accordingly by creating a new logical vector, `nona`, that tells us when the `redist` variable is and is not defined for each country. We rename the new column and then remove `data_countries` and `nona`. 
 
 ```{r}
 data_countries <- lapply(unique(data$country), function(x)
@@ -100,7 +116,7 @@ names(data)[35] <- "since"
 rm(data_countries, nona)
 ```
 
-Now we can calculate the moving averages:
+Now we can calculate the moving averages. Again, we create our country list of data.frames `data_countries`. Then, for each variable `a` (within the `sapply loop`), we use the function `rollapply` to calculate a moving average of the variable for `j` in 1:10 iterations. We do this for each country `i` and use `rbind` to bind this new list into a single `data.frame`, `data` before removing `data_countries`.
 
 ```{r}
 library('dplyr')
@@ -111,159 +127,201 @@ data_countries <- lapply(unique(data$country), function(x)
 
 for (i in 1:length(data_countries)){
   for (j in 1:10) {
-    data_countries[[i]] <- cbind(data_countries[[i]], sapply(c(31, 24, 25, 22, 33, 23, 29, 12, 30, 10, 11, 13), function(a)
-        lag(rollapply(data_countries[[i]][,a], j, FUN = mean, fill = NA, align = "right"),1)
+    data_countries[[i]] <- cbind(data_countries[[i]], 
+        sapply(c(31, 24, 25, 22, 33, 23, 29, 12, 30, 10, 11, 13), function(a)
+          lag(rollapply(data_countries[[i]][,a], j,
+                        FUN = mean, fill = NA, align = "right"),1)
     ))
   }
 }
-
 data <- do.call("rbind", data_countries)
+rm(data_countries)
+```
 
-# reorder columns
+Next, we must reorder our columns so that each variable `a` is matched with its corresponding 10 moving averages.
 
-temp <- data[,c(1:35, 35+1, 35+1+12, 35+1+24, 35+1+36, 35+1+48, 35+1+60, 35+1+72, 35+1+84, 35+1+96, 35+1+108)]
+```{r}
+temp <- data[,c(1:35, 35+1, 35+1+12, 35+1+24, 35+1+36, 35+1+48, 35+1+60, 35+1+72,
+                35+1+84, 35+1+96, 35+1+108)]
 
 for (i in 2:12) {
-  temp <- cbind(temp, data[,c(35+i, 35+i+12, 35+i+24, 35+i+36, 35+i+48, 35+i+60, 35+i+72, 35+i+84, 35+i+96, 35+i+108)])
+  temp <- cbind(temp, data[,c(35+i, 35+i+12, 35+i+24, 35+i+36, 35+i+48, 35+i+60,
+                              35+i+72, 35+i+84, 35+i+96, 35+i+108)])
 }
 
 data <- temp
 rm(temp)
+```
 
+Because we are applying lagged rolling means, each iteration `j` of the `rollapply` function is "shifted down" one row for each `j`. The following section of the code "fills" rows across for and only for each variable `a`.
+
+```{r}
 for(x in 37:45){
-    # Nested loop starts from first row
     for(y in 2:nrow(data)){
-        # Check for NA
         if(is.na(data[y,x])){
             data[y,x] <- data[y,x-1]
         }
     }
 }
 
-for(i in c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110)){
-  for(x in c(37:45+i)){
-      # Nested loop starts from first row
+for(a in c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110)){
+  for(x in c(37:45+a)){
       for(y in 2:nrow(data)){
-          # Check for NA
           if(is.na(data[y,x])){
               data[y,x] <- data[y,x-1]
           }
       }
   }
 }
+```
 
+Finally, we can create our dependent variables: `dvratio9010`, `dvpratio9050`, `dvpratio5010`, `dvstdpjoint`, `dvskew`, `dvstddisp_gall`, `dvpvoc`, `dvunion`, `dvfpop`, `dvfempar`, `dvunempl`, and `dvturnout`. We define the twelve empty slots in columns 156:167 of the data and conditionally fill these columns for each variable `a` depending on the variable `since` (which you'll recall is in the 35th column of `data`, or `data[,35]`). In doing so, we match these moving averages to redistribution observations to values that correspond to the correct moving average based on the period of redistribution.[^2]
+
+[^2]: Note that there are three possible scenarios here: (1) a redistribution observation is observed 1 year after the previous: the independent variable takes on its 1-year lagged value; (2) a redistribution observation is observed $n$ years ago, where $n$ is 2-10: the independent variable takes on its $n$th year moving average value; (3) a redstribution observation is the first observation for the country: the independent variable takes on its 10th year moving average value. 
+
+We then delete these extraneous columns and rename our variables.
+
+```{r}
 data[,156:167] <- NA
 
-for (i in 0:11) {
-  data[,156+i] <- case_when(
-    data[,35] %in% 1 ~ data[,36+i*10],
-    data[,35] %in% 2 ~ data[,37+i*10],
-    data[,35] %in% 3 ~ data[,38+i*10],
-    data[,35] %in% 4 ~ data[,39+i*10],
-    data[,35] %in% 5 ~ data[,40+i*10],
-    data[,35] %in% 6 ~ data[,41+i*10],
-    data[,35] %in% 7 ~ data[,42+i*10],
-    data[,35] %in% 8 ~ data[,43+i*10],
-    data[,35] %in% 9 ~ data[,44+i*10],
-    data[,35] %in% 10 ~ data[,45+i*10]
+for (a in 0:11) {
+  data[,156+a] <- case_when(
+    data[,35] %in% 1 ~ data[,36+a*10],
+    data[,35] %in% 2 ~ data[,37+a*10],
+    data[,35] %in% 3 ~ data[,38+a*10],
+    data[,35] %in% 4 ~ data[,39+a*10],
+    data[,35] %in% 5 ~ data[,40+a*10],
+    data[,35] %in% 6 ~ data[,41+a*10],
+    data[,35] %in% 7 ~ data[,42+a*10],
+    data[,35] %in% 8 ~ data[,43+a*10],
+    data[,35] %in% 9 ~ data[,44+a*10],
+    data[,35] %in% 10 ~ data[,45+a*10]
   )
   
-  data[,156+i][is.na(data[,35]) & !is.na(data[,4])] <- data[,45][is.na(data[,35]) & !is.na(data[,4])]
-  
+data[,156+a][is.na(data[,35]) & !is.na(data[,4])] <- 
+  data[,45][is.na(data[,35]) & !is.na(data[,4])]
 }
 
 data <- data[,c(1:35,156:167)]
 
-names(data)[36:47] <- c("dvratio9010", "dvpratio9050", "dvpratio5010", "dvstdpjoint", "dvskew", "dvstddisp_gall", "dvpvoc", "dvunion", "dvfpop", "dvfempar", "dvunempl", "dvturnout")
-
-rm(data_countries)
+names(data)[36:47] <- c("dvratio9010", "dvpratio9050", "dvpratio5010", "dvstdpjoint",
+                        "dvskew", "dvstddisp_gall", "dvpvoc", "dvunion", "dvfpop",
+                        "dvfempar", "dvunempl", "dvturnout")
 ```
 
-Now, we match these moving averages to redistribution observations by creating a new set of independent variables with values that correspond to the correct moving average based on the period of redistribution. There are three possible scenarios here:
-1) A redistribution observation is observed 1 year after the previous: the independent variable takes on its 1-year lagged value.
-2) A redistribution observation is observed n years ago, where n is [2,10]: the independent variable takes on its nth year moving average value.
-3) A redstribution observation is the first observation for the country: the indpeendnet variable takes on its 10th year moving average value. 
+## Create social spending variables
 
-Social Spending: To estimate the model using the 2nd dependent variable (socspend), we create five-year moving averages for this variable and all independent variables in the vector `c(20, 26:27, 32, 34, 21, 15, 22:23, 10:13, 29:30)`, that is `c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_pratio9010s", "ma_skews", "ma_dreher", "ma_pop65", "ma_stdpjoint", "ma_stddisp_gall", "ma_fempar", "ma_unempl", "ma_union", "ma_turnout", "ma_pvoc", "ma_fpop"`  to represent a slow-moving causal process.
+To estimate the model using the 2nd dependent variable (`socspend`), we create five-year moving averages for this variable and all independent variables `b`, that is `ma_socspend`, `ma_pratio9050s`, `ma_pratio5010s`, `ma_pratio9010s`, `ma_skews`, `ma_dreher`, `ma_pop65`, `ma_stdpjoint`, `ma_stddisp_gall`, `ma_fempar`, `ma_unempl`, `ma_union`, `ma_turnout`, `ma_pvoc`, `ma_fpop`. We rename the variables accordingly.
 
 ```{r}
-data <- cbind(data, sapply(c(20, 26:27, 32, 34, 21, 15, 22:23, 10:13, 29:30), function(x)
-  (lag(data[,x], 1)+lag(data[,x], 2)+lag(data[,x], 3)+lag(data[,x], 4)+lag(data[,x], 5))/5
+data <- cbind(data, sapply(c(20, 26:27, 32, 34, 21, 15, 22:23, 10:13, 29:30), function(b)
+  (lag(data[,b], 1)+lag(data[,b], 2)+lag(data[,b], 3)+lag(data[,b], 4)+lag(data[,b], 5))/5
 ))
 
-names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_pratio9010s", "ma_skews", "ma_dreher", "ma_pop65", "ma_stdpjoint", "ma_stddisp_gall", "ma_fempar", "ma_unempl", "ma_union", "ma_turnout", "ma_pvoc", "ma_fpop")
+names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s",
+                        "ma_pratio9010s", "ma_skews", "ma_dreher", "ma_pop65",
+                        "ma_stdpjoint", "ma_stddisp_gall", "ma_fempar", "ma_unempl",
+                        "ma_union", "ma_turnout", "ma_pvoc", "ma_fpop")
 ```
+
+We are now ready to reproduce the tables in the paper.
 
 # Replication
 
+We begin by removing the variables we don't need and subsetting and sorting the data into a new data.frame: `redistsample`.
+
 ```{r}
-# remove variables we don't need
 data_redist <- data[,c(1:4, 37:38, 36, 40, 47, 45, 41:42, 43, 46 )]
 
-# Subsetting data
 redistsample <- data[!is.na(data$redist),]
 
-# Sorting data
 redistsample <- redistsample[with(redistsample, order(id, year)),]
-
-# create lag
-redistsample$redist_lag <- unlist(by(redistsample,redistsample$id,function(x){c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])}))
-
-# set time series
-redistsample$time<- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
 ```
 
-# Specification 1: 
+Then we lag the main outcome variable, `redist` (redistribution), generating `redist_lag`, and set the time series variable, `time`.
+
+```{r}
+redistsample$redist_lag <- unlist(by(redistsample,redistsample$id,function(x){
+  c(NA,x[,"redist"][1:(length(x[,"redist"])-1)])
+  }))
+
+redistsample$time <- unlist(by(redistsample,redistsample$id,function(x) seq(1:nrow(x))))
+```
+
+## Table 2
+
+The first 8 specifications correspond to the second table[^3] in the paper, and concern the determinants of redistribution.
+
+[^3]: Table 1 in the paper is a descriptive table and is not pertinent to our analysis.
+
+### Specification 1: 
 
 ```{r}
 library('panelAR')
-out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
+                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
+                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
+                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+                bound.rho=TRUE)
 summary(out1)
 ```
 
----
-
-# Specification 2 (remove outliers)
+### Specification 2 (remove outliers):
 
 ```{r}
-#defining outliers 
+# defining outliers 
 mod1.resid <- out1$residuals
 index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
-#creating a new subset without these observations
+# creating a new subset without these observations
 redistsample_noout<- out1$model[index,]
 
-#running same model as spec1 with new subset
-out2 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+# running same model as spec1 with new subset
+out2 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
+                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
+                data=redistsample_noout, panelVar='id', timeVar='time', 
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
 summary(out2)
 ```
 
-# Specification 3 (no controls)
+### Specification 3 (no controls):
+
 ```{r}
-out3 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out3 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
+                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
+                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+                bound.rho=TRUE)
 summary(out3)
 ```
 
-# Specification 4 (no controls, no outliers)
+### Specification 4 (no controls, no outliers):
 
 ```{r}
-#defining outliers 
+# defining outliers 
 mod3.resid <- out3$residuals
 index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
-#creating a new subset without these observations
+# creating a new subset without these observations
 redistsample_noout<- out3$model[index,]
-#running same model as spec3 with new subset
-out4 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id), data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+# running same model as spec3 with new subset
+out4 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
+                data=redistsample_noout, panelVar='id', timeVar='time',
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
 summary(out4)
 ```
 
-# Specification 5 (Using skew as main inequality measure)
+### Specification 5 (using skew as main inequality measure):
 
 ```{r}
-out5<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out5<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
+                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample,
+               panelVar='id', timeVar='time', autoCorr='ar1',
+               panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+               bound.rho=TRUE) 
 summary(out5)
 ```
 
-# Specification 6 (Skew as main measure, no outliers)
+### Specification 6 (skew as main measure, no outliers):
 
 ```{r}
 mod5.resid <- out5$residuals
@@ -271,18 +329,25 @@ index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
 #creating a new subset without these observations
 redistsample_noout<- out5$model[index,]
 #running same model as spec5 with new subset
-out6<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+out6<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
+                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, 
+               data=redistsample_noout, panelVar='id', timeVar='time', 
+               autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+               panel.weight='t-1', bound.rho=TRUE) 
 summary(out6)
 ```
 
-# Specification 7 (Skew as main measure, no controls, country fixed effects)
+### Specification 7 (skew as main measure, no controls, country fixed effects):
 
 ```{r}
-out7 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out7 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
+                data=redistsample, panelVar='id', timeVar='time',
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
 summary(out7)
 ```
 
-# Specification 8 (Skew as main measure, no controls, fixed effects without outliers)
+### Specification 8 (skew as main measure, no controls, fixed effects without outliers):
 
 ```{r}
 mod7.resid <- out7$residuals
@@ -290,36 +355,46 @@ index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
 #creating a new subset without these observations
 redistsample_noout<- out7$model[index,]
 #running same model as spec7 with new subset
-out8 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), data=redistsample_noout, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+out8 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
+                data=redistsample_noout, panelVar='id', timeVar='time',
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
 summary(out8)
 ```
 
-For the next table, we use the same 8 specifications but replace our dependent variable with social spending (socspend) and the 5-year moving averages of the independent variable names. 
-We use the full data set for these specifications, except when we drop the outliers. The independent variables included are:
-socspend.lag mapratio9050s mapratio5010s mapop65 mafempar maturnout mastddisp_gall mapvoc maunion maunempl madreher gdpgrowth, where the "ma" prefixes denotes moving average.
+## Table 3
+
+For the next table, we use the same 8 specifications but replace our dependent variable with social spending (socspend) and the 5-year moving averages of the independent variable names.
+
+We use the full data set for these specifications, except when we drop the outliers. The independent variables included are: `socspend_lag` `mapratio9050s` `mapratio5010s` `mapop65` `mafempar` `maturnout` `mastddisp_gall` `mapvoc` `maunion` `maunempl` `madreher` `gdpgrowth`; the "ma" prefixes denotes moving averages.
+
+Again we begin by removing variables we don't need into our new data.frame `data_socspend`, sorting the data, and creating the lag and time variables.
 
 ```{r}
-
-# remove variables we don't need
 data_socspend <- data[,c(1:3, 18, 20, 48:62 )]
 
-# Sorting data
 data_socspend  <- data_socspend [with(data_socspend , order(id, year)),]
 
-# create lag
-data_socspend $socspend_lag <- unlist(by(data_socspend ,data_socspend $id,function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
+data_socspend$socspend_lag <- unlist(by(data_socspend ,data_socspend$id,                                    function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
 
-# set time series
-data_socspend $time<- unlist(by(data_socspend ,data_socspend $id,function(x) seq(1:nrow(x))))
+data_socspend$time <- unlist(by(
+  data_socspend ,data_socspend $id,function(x) seq(1:nrow(x))))
 ```
-Specification 9: 
+
+### Specification 9:
+
 ```{r}
-out9 <- panelAR(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, bound.rho=TRUE)
+out9 <- panelAR(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=data_socspend , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
 summary(out9)
 
 ```
 
-# Specification 10 (remove outliers)
+### Specification 10 (remove outliers):
 
 ```{r}
 #defining outliers 
@@ -333,13 +408,15 @@ out10 <- panelAR(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_
 summary(out10)
 ```
 
-# Specification 11 (no controls)
+### Specification 11 (no controls):
+
 ```{r}
 out11 <- panelAR(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=data_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out11)
 ```
 
-# Specification 12 (no controls, no outliers)
+### Specification 12 (no controls, no outliers):
+
 ```{r}
 #defining outliers 
 mod11.resid <- out11$residuals
@@ -351,13 +428,15 @@ out12 <- panelAR(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth+ as.facto
 summary(out12)
 ```
 
-#Specification 13 (Using skew as main inequality measure)
+### Specification 13 (using skew as main inequality measure):
+
 ```{r}
 out13<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out13)
 ```
 
-#Specification 14 (Skew as main measure, no outliers)
+### Specification 14 (skew as main measure, no outliers):
+
 ```{r}
 mod13.resid <- out13$residuals
 index <- which(abs((mod13.resid-mean(mod13.resid))/sd(mod13.resid)) <= 1.5)
@@ -368,13 +447,15 @@ out14<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ 
 summary(out14)
 ```
 
-#Specification 15 (Skew as main measure, no controls, country fixed effects)
+### Specification 15 (skew as main measure, no controls, country fixed effects):
+
 ```{r}
 out15 <- panelAR(socspend ~ ma_pratio9010s + ma_skews +gdpgrowth+ as.factor(id), data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out15)	
 ```
 
-# Specification 16 (Skew as main measure, no controls, fixed effects without outliers)
+### Specification 16 (skew as main measure, no controls, fixed effects without outliers):
+
 ```{r}
 mod15.resid <- out15$residuals
 index <- which(abs((mod15.resid-mean(mod15.resid))/sd(mod15.resid)) <= 1.5)
@@ -385,15 +466,16 @@ out16 <- panelAR(socspend ~ ma_pratio9010s + ma_skews +gdpgrowth + as.factor(id)
 summary(out16)
 ```
 
-## Immigration Models (Table 4)
+## Table 4 (Immigration Models)
 
-# Specification 17 (Redistribution as main DV, adding dvfpop)
+### Specification 17 (redistribution as main DV, adding `dvfpop`):
+
 ```{r}
 out17 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010 + dvturnout + dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl +dvfpop, data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
 summary(out17)
 ```
 
-# Specification 18 (remove outliers)
+### Specification 18 (remove outliers):
 
 ```{r}
 #defining outliers 
@@ -407,14 +489,15 @@ out18 <- panelAR(redist ~ redist_lag + dvskew + dvratio9010+  dvturnout + dvfemp
 summary(out18)
 ```
 
-# Specification 19 (Social spending as main DV, adding dvfpop)
+### Specification 19 (social spending as main DV, adding dvfpop):
 
 ```{r}
 out19<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher +ma_fpop + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out19)
 ```
 
-#Specification 20 (removing outliers)
+### Specification 20 (removing outliers):
+
 ```{r}
 #defining outliers 
 mod19.resid <- out19$residuals
@@ -427,36 +510,33 @@ out20<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ 
 summary(out20)
 ```
 
-## Partisanship (Table 5)
+## Table 5 (Partisanship)
+
+The next table requires us to create a new data subset that excludes 1979 and earlier years. We repeat the previous procedures to set up the data for the models.
 
 ```{r}
-#Creating a new data subset that excludes 1979 and earlier years
-
 recentyears <- subset(data, year>1979)
 
 recentyears <- recentyears[with(recentyears , order(id, year)),]
 
-#test <- test[order(test$id, test$year),]
-
-# set time series
 recentyears$time<- unlist(by(recentyears ,recentyears$id,function(x) seq(1:nrow(x))))
 ```
 
-#Specification 21 (IVs include skew, proportionality, and turnout)
+### Specification 21 (IVs include skew, proportionality, and turnout):
 
 ```{r}
 out21<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out21)
 ```
 
-#Specification 22 (Adding globalization)
+### Specification 22 (adding globalization):
 
 ```{r}
 out22<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout +ma_dreher , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none', rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
 summary(out22)
 ```
 
-#Specification 23 (Adding immigration)
+### Specification 23 (adding immigration)
 
 ```{r}
 out23<- panelAR(stdpjoint ~ ma_skews + ma_stddisp_gall + ma_turnout + ma_dreher + ma_fpop , data=recentyears, panelVar='id', timeVar='time', autoCorr='none', panelCorrMethod='none',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 

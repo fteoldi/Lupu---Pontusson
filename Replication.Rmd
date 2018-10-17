@@ -16,9 +16,7 @@ library('haven')
 data <- read_dta("LupPon_APSR.dta")
 ```
 
-## Data cleaning
-
-First, the authors redefine inverse disproportionality measures, `disp_gall` as such.
+Then the authors redefine their disproportionality measures, `disp_gall` as inverse disproportionality measures:
 
 ```{r}
 data$disp_gall <- data$disp_gall*-1
@@ -196,59 +194,6 @@ data <- cbind(data, sapply(c(20, 26:27, 32, 34, 21, 15, 22:23, 10:13, 29:30), fu
 names(data)[48:62] <- c("ma_socspend", "ma_pratio9050s", "ma_pratio5010s", "ma_pratio9010s", "ma_skews", "ma_dreher", "ma_pop65", "ma_stdpjoint", "ma_stddisp_gall", "ma_fempar", "ma_unempl", "ma_union", "ma_turnout", "ma_pvoc", "ma_fpop")
 ```
 
-# Design declaration
-
-We start by loading in the `DeclareDesign` package and defining the elements of the design.
-
-* `declare_population` refers to the sample size of the study. The study concerns country-year units. In this case, there are 858 observations.
-* `declare_potential_oucomes` refers to
-
-```{r}
-library('DeclareDesign')
-
-# X: take some parameters based on a simple model of X on Y
-
-modX <- lm(data$redist ~ data$skew)
-a_X <- summary(modX)$coefficients["(Intercept)","Estimate"]
-b_X <- summary(modX)$coefficients["data$skew","Estimate"]
-sd_X <- 1
-
-rho_XY <- -.5 # Confounding 
-sd_X_type <- .1 # sd on effect heterogeneity
-sd_Y_type <- .005 # sd on compliance heterogeneity
-rho_XY_type <- 0 # Possible correlation between compliance and effects
-```
-
-```{r}
-population <- declare_population(
-  N = 858,
-  redist = sample(data$redist, N, replace = TRUE),
-  u_X = rnorm(N, sd = sd_X),
-  u_X_type = rnorm(N, df = sd_X_type)
-)
-```
-
-```{r}
-fx <- function(a_X, b_X, u_X_type, u_X)
-a_X + (b_X + u_X_type) + u_X
-
-potentials <- declare_step(handler = fabricate, 
-  redist = fx(skew, a_X, b_X, u_X_type, u_X))
-```
-
-```{r}
-estimand <- declare_estimand(
-  ols = mean((fx(max(skew), a_X, b_X, u_X_type, u_X) - fx(min(skew), a_X, b_X, u_X_type, u_X))/(max(skew) - min(skew))))
-```
-
-```{r}
-estimator_1 <- declare_estimator(redist ~ skew, estimand = "ols", 
-model = lm_robust, label = "lm")
-```
-
-```{r}
-lupu_pontusson_2011_design <- population + potentials + estimand + estimator_1
-```
 # Replication
 
 ```{r}

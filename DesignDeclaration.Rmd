@@ -1,0 +1,64 @@
+---
+title: "Replication: The Structure of Inequality and the Politics of Redistribution"
+author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
+date: "October 23rd, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Design declaration
+
+We start by loading in the `DeclareDesign` package and defining the elements of the design.
+
+* `declare_population` refers to the sample size of the study. The study concerns country-year units. In this case, there are 858 observations.
+* `declare_potential_oucomes` refers to
+
+```{r}
+library('DeclareDesign')
+
+# X: take some parameters based on a simple model of X on Y
+
+modX <- lm(data$redist ~ data$skew)
+a_X <- summary(modX)$coefficients["(Intercept)","Estimate"]
+b_X <- summary(modX)$coefficients["data$skew","Estimate"]
+sd_X <- 1
+
+rho_XY <- -.5 # Confounding 
+sd_X_type <- .1 # sd on effect heterogeneity
+sd_Y_type <- .005 # sd on compliance heterogeneity
+rho_XY_type <- 0 # Possible correlation between compliance and effects
+```
+
+```{r}
+population <- declare_population(
+  N = 858,
+  redist = sample(data$redist, N, replace = TRUE),
+  u_X = rnorm(N, sd = sd_X),
+  u_X_type = rnorm(N, df = sd_X_type)
+)
+```
+
+```{r}
+fx <- function(a_X, b_X, u_X_type, u_X)
+a_X + (b_X + u_X_type) + u_X
+
+potentials <- declare_step(handler = fabricate, 
+  redist = fx(skew, a_X, b_X, u_X_type, u_X))
+```
+
+```{r}
+estimand <- declare_estimand(
+  ols = mean((fx(max(skew), a_X, b_X, u_X_type, u_X) - fx(min(skew), a_X, b_X, u_X_type, u_X))/(max(skew) - min(skew))))
+```
+
+```{r}
+estimator_1 <- declare_estimator(redist ~ skew, estimand = "ols", 
+model = lm_robust, label = "lm")
+```
+
+```{r}
+lupu_pontusson_2011_design <- population + potentials + estimand + estimator_1
+```

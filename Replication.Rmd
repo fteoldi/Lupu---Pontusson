@@ -780,6 +780,8 @@ ext4d <- panelAR(public_unemp ~ ma_skews + ma_pratio9010s + gdpgrowth,
                 rho.na.rm=TRUE, bound.rho=TRUE)
 summary(ext4d)
 
+
+
 ```
 
 

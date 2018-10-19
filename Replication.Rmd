@@ -209,6 +209,12 @@ names(data)[36:47] <- c("dvratio9010", "dvpratio9050", "dvpratio5010", "dvstdpjo
                         "dvfempar", "dvunempl", "dvturnout")
 ```
 
+In this brief code block, we correct an error from the code that is an artifact of Sweden being the only country with a value for the year 2005.
+
+```{r}
+data[723,39] <- 0.0718763
+```
+
 ## Create social spending variables
 
 To estimate the model using the 2nd dependent variable (`socspend`), we create five-year moving averages for this variable and all independent variables `b`, that is `ma_socspend`, `ma_pratio9050s`, `ma_pratio5010s`, `ma_pratio9010s`, `ma_skews`, `ma_dreher`, `ma_pop65`, `ma_stdpjoint`, `ma_stddisp_gall`, `ma_fempar`, `ma_unempl`, `ma_union`, `ma_turnout`, `ma_pvoc`, `ma_fpop`. We rename the variables accordingly.

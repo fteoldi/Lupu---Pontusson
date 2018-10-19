@@ -210,6 +210,9 @@ xtpcse stdpjoint maskews mastddisp_gall maturnout madreher if year>1979, pairwis
 
 xtpcse stdpjoint maskews mastddisp_gall maturnout madreher mafpop if year>1979, pairwise
 
+
+
+
 preserve
 drop if year<1980
 collapse (mean) stdpjoint skew stddisp_gall dreher fpop pop65 turnout fempar, by(id)
@@ -250,4 +253,177 @@ gen outlier = 0 if e(sample)
 replace outlier = 1 if abs(stresid)>1.5
 xtpcse socspend l1.socspend mastdpjoint maratio9010s maskews mafpop mapop65 mafempar maturnout mastddisp_gall mapvoc maunion maunempl madreher gdpgrowth if outlier!=1, pairwise cor(psar1)
 drop pred resid stresid outlier
+
+***EXTENSION***
+
+clear all
+import delimited /Users/zarariaz/Documents/GitHub/Lupu---Pontusson/merged.csv
+
+
+destring gdpgrowth socspend ma_socspend ma_pratio9050s ma_pratio9010s ma_skews ma_dreher ma_pop65 ma_stdpjoint ma_stddisp_gall ma_fempar ma_unempl ma_union ma_turnout ma_pvoc ma_fpop, replace force
+destring ma_pratio5010s  fambenefits_lag incapacity_lag pubspendinglbr_lag pubunemplag, replace force
+
+
+*we recreate table 3 results using 4 disaggregated spending DVs
+
+
+** Social spending models (Table 3)
+
+sort id year
+by id: egen order = seq()
+tsset id order
+
+**Family Benefits**
+
+xtpcse fambenefits fambenefits_lag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = fambenefits-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse fambenefits fambenefits_lag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse fambenefits ma_pratio9050s ma_pratio5010s gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = fambenefits-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse fambenefits ma_pratio9050s ma_pratio5010s gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xtpcse fambenefits fambenefits_lag ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = fambenefits-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse fambenefits fambenefits_lag ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse fambenefits fambenefits_lag ma_ratio9010s ma_skews gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = fambenefits-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse socspend ma_ratio9010s ma_skews gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+**Incapacity 
+
+xtpcse incapacity incapacity_lag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = incapacity-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse incapacity incapacity_lag mapratio9050s mapratio5010s mapop65 mafempar maturnout mastddisp_gall mapvoc maunion maunempl madreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse incapacity ma_pratio9050s ma_pratio5010s gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = incapacity-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse incapacity ma_pratio9050s ma_pratio5010s gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xtpcse incapacity incapacity_lag  ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = incapacity-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse incapacity incapacity_lag ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse incapacity ma_ratio9010s ma_skews gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = incapacity-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse incapacity ma_ratio9010s ma_skews gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+**Public Spending on Labor
+
+xtpcse pubspending_labor pubspendinglbr_lag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = pubspending_labor-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse pubspending_labor pubspendinglbr_lag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse pubspending_labor ma_pratio9050s ma_pratio5010s gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = pubspending_labor-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse pubspending_labor ma_pratio9050s ma_pratio5010s gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xtpcse pubspending_labor pubspendinglbr_lag  ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = pubspending_labor-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse pubspending_labor pubspendinglbr_lag maratio9010s maskews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse pubspending_labor ma_ratio9010s ma_skews gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = pubspending_labor-pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse pubspending_labor ma_ratio9010s ma_skews gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+**Unemployment
+
+
+xtpcse public_unemp pubunemplag ma_pratio9050s ma_pratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = public_unemp -pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse public_unemp  pubunemplag mapratio9050s mapratio5010s ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse public_unemp  ma_pratio9050s ma_pratio5010s gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = public_unemp -pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse public_unemp  mapratio9050s mapratio5010s gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xtpcse public_unemp pubunemplag ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = public_unemp -pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xtpcse public_unemp pubunemplag ma_ratio9010s ma_skews ma_pop65 ma_fempar ma_turnout ma_stddisp_gall ma_pvoc ma_union ma_unempl ma_dreher gdpgrowth if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
+xi: xtpcse public_unemp  ma_ratio9010s ma_skews gdpgrowth i.id, pairwise cor(psar1)
+predict pred if e(sample), xb
+gen resid = public_unemp -pred
+egen stresid=std(resid)
+gen outlier = 0 if e(sample)
+replace outlier = 1 if abs(stresid)>1.5
+xi: xtpcse public_unemp maratio9010s maskews gdpgrowth i.id if outlier!=1, pairwise cor(psar1)
+drop pred resid stresid outlier
+
 

@@ -628,43 +628,158 @@ summary(out30)
 
 # Extension
 ```{r eval = FALSE}
-# not working
+#Loading data that contains disaggregated data for disaggregated categories of social spending
+disag_data <- read_dta("disag_spending.dta")
 
-#Loading data that contains disaggregated data for 6 categories of social spending
-disag_data <- read_dta(paste0(directory, "disag_spending.dta"))
-
-#Linearly interpolating missing values
+#Imputing missing values using "mice command"
 library('zoo')
 
 disagdata_countries <- lapply(unique(disag_data$country), function(x)
   subset(disag_data, disag_data$country==x)
 )
 
-
-
-
-
-
-test <- disagdata_countries[[1]]
-test2 <- md.pattern(test)
-
-test3 <- mice(test,m=5,maxit=50,meth='pmm',seed=500)
-summary(mice(test,m=5,maxit=50,meth='pmm',seed=500))
-
-completedData <- complete(test3, 1)
-
-for (i in 1:length(disagdata_countries)){
-disagdata_countries[[i]] <- cbind(disagdata_countries[[i]], sapply(c(5:8), function(y)
-   na.approx(disagdata_countries[[i]][,y], x = index(disagdata_countries[[i]][,3], disagdata_countries[[i]][,y]), na.rm = FALSE)
-  ))
-}
-
-disag_data <- do.call("rbind", disagdata_countries)
-
-
-#names(disag_data)[9:12] <- c("fambenefits_v2", "incapacity_v2", "pubspending_labor_v2", "public_unemp_v2")
-
-#rm(disagdata_countries)
+install.packages("mice")
+library(mice)
+data_imputed<-complete(mice(disag_data,m=5,maxit=50,meth='pmm',seed=500))
 
 ```
+
+#Merging and cleaning merged data
+```{r}
+
+merged<- merge(data_socspend, data_imputed, by=c("country","year"))
+
+
+#Creating lags for each dependent variable
+merged$fambenefits_lag <- unlist(by(merged ,merged$id,                                    function(x){c(NA,x[,"fambenefits"][1:(length(x[,"fambenefits"])-1)])}))
+
+merged$incapacity_lag <- unlist(by(merged ,merged$id,                                    function(x){c(NA,x[,"incapacity"][1:(length(x[,"incapacity"])-1)])}))
+
+merged$pubspendinglbr_lag <- unlist(by(merged ,merged$id,                                    function(x){c(NA,x[,"pubspending_labor"][1:(length(x[,"pubspending_labor"])-1)])}))
+
+merged$pubunemplag <- unlist(by(merged ,merged$id,                                    function(x){c(NA,x[,"public_unemp"][1:(length(x[,"public_unemp"])-1)])}))
+
+#Setting up time-series conditions on merged data:
+
+merged <- merged[with(merged , order(id, year)),]
+
+merged$time<- unlist(by(merged ,merged$id,function(x) seq(1:nrow(x))))
+
+```
+
+#Running models from table 3 on disaggregated outcomes
+
+```{r}
+#Main model (using 90/50 and 50/10 ratios)
+ext1a <- panelAR(fambenefits ~ fambenefits_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext1a)
+
+
+ext1b <- panelAR(incapacity ~ incapacity_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext1b)
+
+ext1c <- panelAR(pubspending_labor ~ pubspendinglbr_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext1c)
+
+ext1d <- panelAR(public_unemp ~ pubunemplag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext1d)
+
+##Model without controls
+
+ext2a <- panelAR(fambenefits ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(ext2a)
+
+ext2b <- panelAR(incapacity ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(ext2b)
+
+ext2c <- panelAR(pubspending_labor ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(ext2c)
+
+ext2d <- panelAR(public_unemp ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(ext2d)
+
+#Using skew and 90/10 ratios:
+
+ext3a <- panelAR(fambenefits ~ fambenefits_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext3a)
+
+
+ext3b <- panelAR(incapacity ~ incapacity_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext3b)
+
+ext3c <- panelAR(pubspending_labor ~ pubspendinglbr_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext3c)
+
+ext3d <- panelAR(public_unemp ~ pubunemplag + ma_skews + ma_pratio9010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext3d)
+
+#Using skew and ratio and no other controls
+
+ext4a <- panelAR(fambenefits ~  ma_skews + ma_pratio9010s + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext4a)
+
+
+ext4b <- panelAR(incapacity ~ ma_skews + ma_pratio9010s + gdpgrowth,  
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext4b)
+
+ext4c <- panelAR(pubspending_labor ~ ma_skews + ma_pratio9010s + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext4c)
+
+ext4d <- panelAR(public_unemp ~ ma_skews + ma_pratio9010s + gdpgrowth, 
+                data=merged , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(ext4d)
+
+```
+
 

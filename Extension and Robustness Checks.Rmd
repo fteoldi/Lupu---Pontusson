@@ -91,81 +91,41 @@ ext1d <- panelAR(public_unemp ~ pubunemplag + ma_pratio9050s + ma_pratio5010s + 
                 rho.na.rm=TRUE, bound.rho=TRUE)
 summary(ext1d)
 
-##Model without controls
-
-ext2a <- panelAR(fambenefits ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-summary(ext2a)
-
-ext2b <- panelAR(incapacity ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-summary(ext2b)
-
-ext2c <- panelAR(pubspending_labor ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-summary(ext2c)
-
-ext2d <- panelAR(public_unemp ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=merged , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-summary(ext2d)
-
 #Using skew and 90/10 ratios:
 
-ext3a <- panelAR(fambenefits ~ fambenefits_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+ext2a <- panelAR(fambenefits ~ fambenefits_lag + ma_skews + ma_pratio9010s + ma_pop65 +
                   ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
                   ma_unempl + ma_dreher + gdpgrowth, 
                 data=merged , panelVar='id', timeVar='time', 
                 autoCorr='psar1', panelCorrMethod='pcse',
                 rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext3a)
+summary(ext2a)
 
 
-ext3b <- panelAR(incapacity ~ incapacity_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+ext2b <- panelAR(incapacity ~ incapacity_lag + ma_skews + ma_pratio9010s + ma_pop65 +
                   ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
                   ma_unempl + ma_dreher + gdpgrowth, 
                 data=merged , panelVar='id', timeVar='time', 
                 autoCorr='psar1', panelCorrMethod='pcse',
                 rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext3b)
+summary(ext2b)
 
-ext3c <- panelAR(pubspending_labor ~ pubspendinglbr_lag + ma_skews + ma_pratio9010s + ma_pop65 +
+ext2c <- panelAR(pubspending_labor ~ pubspendinglbr_lag + ma_skews + ma_pratio9010s + ma_pop65 +
                   ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
                   ma_unempl + ma_dreher + gdpgrowth, 
                 data=merged , panelVar='id', timeVar='time', 
                 autoCorr='psar1', panelCorrMethod='pcse',
                 rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext3c)
+summary(ext2c)
 
-ext3d <- panelAR(public_unemp ~ pubunemplag + ma_skews + ma_pratio9010s + ma_pop65 +
+ext2d <- panelAR(public_unemp ~ pubunemplag + ma_skews + ma_pratio9010s + ma_pop65 +
                   ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
                   ma_unempl + ma_dreher + gdpgrowth, 
                 data=merged , panelVar='id', timeVar='time', 
                 autoCorr='psar1', panelCorrMethod='pcse',
                 rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext3d)
+summary(ext2d)
 
-#Using skew and ratio and no other controls
-
-ext4a <- panelAR(fambenefits ~  ma_skews + ma_pratio9010s + gdpgrowth, 
-                data=merged , panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',
-                rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext4a)
-
-
-ext4b <- panelAR(incapacity ~ ma_skews + ma_pratio9010s + gdpgrowth,  
-                data=merged , panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',
-                rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext4b)
-
-ext4c <- panelAR(pubspending_labor ~ ma_skews + ma_pratio9010s + gdpgrowth, 
-                data=merged , panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',
-                rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext4c)
-
-ext4d <- panelAR(public_unemp ~ ma_skews + ma_pratio9010s + gdpgrowth, 
-                data=merged , panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',
-                rho.na.rm=TRUE, bound.rho=TRUE)
-summary(ext4d)
 ```
 
 # Robustness checks
@@ -187,50 +147,6 @@ mod1_out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturno
 summary(mod1_out1)
 ```
 
-### Specification 2 (remove outliers):
-
-```{r}
-# defining outliers 
-mod1.resid <- mod1_out1$residuals
-index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod1_out1$model[index,]
-
-# running same model as spec1 with new subset
-mod1_out2 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
-                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
-                data=redistsample_noout, panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod1_out2)
-```
-
-### Specification 3 (no controls, no country dummies):
-
-```{r}
-mod1_out3 <- panelAR(redist ~ dvpratio9050 + dvpratio5010,
-                data=redistsample, panelVar='id', timeVar='time', autoCorr='psar1',
-                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
-                bound.rho=TRUE)
-summary(mod1_out3)
-```
-
-### Specification 4 (no controls, no outliers, no country dummies):
-
-```{r}
-# defining outliers 
-mod3.resid <- mod1_out3$residuals
-index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod1_out3$model[index,]
-# running same model as spec3 with new subset
-mod1_out4 <- panelAR(redist ~ dvpratio9050 + dvpratio5010,
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod1_out4)
-```
-
 ### Specification 5 (using skew as main inequality measure):
 
 ```{r}
@@ -240,47 +156,6 @@ mod1_out5 <- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dv
                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
                bound.rho=TRUE) 
 summary(mod1_out5)
-```
-
-### Specification 6 (skew as main measure, no outliers):
-
-```{r}
-mod5.resid <- mod1_out5$residuals
-index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod1_out5$model[index,]
-#running same model as spec5 with new subset
-mod1_out6 <- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
-                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, 
-               data=redistsample_noout, panelVar='id', timeVar='time', 
-               autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
-               panel.weight='t-1', bound.rho=TRUE) 
-summary(mod1_out6)
-```
-
-### Specification 7 (skew as main measure, no controls, no country dummies):
-
-```{r}
-mod1_out7 <- panelAR(redist ~ dvratio9010 + dvskew, 
-                data=redistsample, panelVar='id', timeVar='time',
-                autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod1_out7)
-```
-
-### Specification 8 (skew as main measure, no controls, no country dummies without outliers):
-
-```{r}
-mod7.resid <- mod1_out7$residuals
-index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod1_out7$model[index,]
-#running same model as spec7 with new subset
-mod1_out8 <- panelAR(redist ~ dvratio9010 + dvskew, 
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod1_out8)
 ```
 
 ## Table 2b: different panel correction methods (a = Huber-White sandiwch estimator, b = panel-weighted least squares)
@@ -303,85 +178,6 @@ mod2b_out1 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturn
 summary(mod2b_out1)
 ```
 
-### Specification 2 (remove outliers):
-
-```{r}
-# defining outliers 
-mod1.resid <- mod2a_out1$residuals
-index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod2a_out1$model[index,]
-
-# running same model as spec1 with new subset
-mod2a_out2 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
-                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
-                data=redistsample_noout, panelVar='id', timeVar='time', 
-                autoCorr='ar1', panelCorrMethod='phet',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2a_out2)
-
-# defining outliers 
-mod1.resid <- mod2b_out1$residuals
-index <- which(abs((mod1.resid-mean(mod1.resid))/sd(mod1.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod2b_out1$model[index,]
-
-# running same model as spec1 with new subset
-mod2b_out2 <- panelAR(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
-                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
-                data=redistsample_noout, panelVar='id', timeVar='time', 
-                autoCorr='ar1', panelCorrMethod='pwls',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2b_out2)
-```
-
-### Specification 3 (no controls):
-
-```{r}
-mod2a_out3 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
-                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
-                panelCorrMethod='phet',rho.na.rm=TRUE, panel.weight='t-1',
-                bound.rho=TRUE)
-summary(mod2a_out3)
-
-# no country dummies
-mod2b_out3 <- panelAR(redist ~ dvpratio9050 + dvpratio5010,
-                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
-                panelCorrMethod='pwls',rho.na.rm=TRUE, panel.weight='t-1',
-                bound.rho=TRUE)
-summary(mod2b_out3)
-```
-
-### Specification 4 (no controls, no outliers):
-
-```{r}
-# defining outliers 
-mod3.resid <- mod2a_out3$residuals
-index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod2a_out3$model[index,]
-# running same model as spec3 with new subset
-mod2a_out4 <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='phet',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2a_out4)
-
-# no country fixed effects
-
-# defining outliers 
-mod3.resid <- mod2b_out3$residuals
-index <- which(abs((mod3.resid-mean(mod3.resid))/sd(mod3.resid)) <= 1.5)
-# creating a new subset without these observations
-redistsample_noout<- mod2a_out3$model[index,]
-# running same model as spec3 with new subset
-mod2b_out4 <- panelAR(redist ~ dvpratio9050 + dvpratio5010,
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='pwls',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2b_out4)
-```
-
 ### Specification 5 (using skew as main inequality measure):
 
 ```{r}
@@ -398,77 +194,4 @@ mod2b_out5<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dv
                panelCorrMethod='pwls',rho.na.rm=TRUE, panel.weight='t-1',
                bound.rho=TRUE) 
 summary(mod2b_out5)
-```
-
-### Specification 6 (skew as main measure, no outliers):
-
-```{r}
-mod5.resid <- mod2a_out5$residuals
-index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod2a_out5$model[index,]
-#running same model as spec5 with new subset
-mod2a_out6<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
-                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, 
-               data=redistsample_noout, panelVar='id', timeVar='time', 
-               autoCorr='ar1', panelCorrMethod='phet',rho.na.rm=TRUE,
-               panel.weight='t-1', bound.rho=TRUE) 
-summary(mod2a_out6)
-
-mod5.resid <- mod2b_out5$residuals
-index <- which(abs((mod5.resid-mean(mod5.resid))/sd(mod5.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod2b_out5$model[index,]
-#running same model as spec5 with new subset
-mod2b_out6<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
-                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, 
-               data=redistsample_noout, panelVar='id', timeVar='time', 
-               autoCorr='ar1', panelCorrMethod='pwls',rho.na.rm=TRUE,
-               panel.weight='t-1', bound.rho=TRUE) 
-summary(mod2b_out6)
-```
-
-### Specification 7 (skew as main measure, no controls, country dummies):
-
-```{r}
-mod2a_out7 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
-                data=redistsample, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='phet',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2a_out7)
-
-# no country dummies
-mod2b_out7 <- panelAR(redist ~ dvratio9010 + dvskew, 
-                data=redistsample, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='pwls',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2b_out7)
-```
-
-### Specification 8 (skew as main measure, no controls, fixed effects without outliers):
-
-```{r}
-mod7.resid <- mod2a_out7$residuals
-index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod2a_out7$model[index,]
-#running same model as spec7 with new subset
-mod2a_out8 <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='phet',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2a_out8)
-
-# no country dummies
-
-mod7.resid <- mod2a_out7$residuals
-index <- which(abs((mod7.resid-mean(mod7.resid))/sd(mod7.resid)) <= 1.5)
-#creating a new subset without these observations
-redistsample_noout<- mod2a_out7$model[index,]
-#running same model as spec7 with new subset
-mod2a_out8 <- panelAR(redist ~ dvratio9010 + dvskew, 
-                data=redistsample_noout, panelVar='id', timeVar='time',
-                autoCorr='ar1', panelCorrMethod='pwls',rho.na.rm=TRUE,
-                panel.weight='t-1', bound.rho=TRUE)
-summary(mod2a_out8)
 ```

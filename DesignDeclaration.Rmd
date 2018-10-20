@@ -18,47 +18,128 @@ We start by loading in the `DeclareDesign` package and defining the elements of 
 
 ```{r}
 library('DeclareDesign')
-
-# X: take some parameters based on a simple model of X on Y
-
-modX <- lm(data$redist ~ data$skew)
-a_X <- summary(modX)$coefficients["(Intercept)","Estimate"]
-b_X <- summary(modX)$coefficients["data$skew","Estimate"]
-sd_X <- 1
-
-rho_XY <- -.5 # Confounding 
-sd_X_type <- .1 # sd on effect heterogeneity
-sd_Y_type <- .005 # sd on compliance heterogeneity
-rho_XY_type <- 0 # Possible correlation between compliance and effects
+library('panelAR')
 ```
 
 ```{r}
+
+
+## Declare Design
+
+#Model (M): The paper tests the social affinity hypothesis that predicts middle-income voters will support redistribution policies when the distance between the middle and poor is small relative to the distance between the middle and the affluent (skew).
+
+#Inquiry (I):
+
+#Data Strategy (D): The study uses country-year data on redistribution (% change in Gini coefficients brought about by taxes and government transfers) and non-elderly social spending for 18 OECD countries for the period 1969-2005. The data is purely observational and does not involve sampling. 
+
+#Answer Strategy (A): 
+```
+
+```{r}
+
+# We model the primary specifications used to measure redistribution outcomes (Table 2, Columns 3 and 7)
+
+#Step 1: Load actual data
+load("redistsample.Rdata")
+data<- redistsample
+
+#Step 2: Generate parameters
+modelX <- panelAR(redist ~ skew + gdpgrowth + as.factor(id),
+                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
+                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+                bound.rho=TRUE)
+
+#install.packages("lmtest")
+#library(lmtest)
+results<- coeftest(modelX) #storing coefficients from model
+results
+a_X <- results["(Intercept)","Estimate"]
+b_X <- results["skew","Estimate"]
+c_X <- results["gdpgrowth", "Estimate"]
+
+summary(data$gdpgrowth)
+
+# Create vector of residuals
+u_X <- rep(NA, 87)
+names(u_X) <- rownames(redistsample)
+u_X[names(modelX$residuals)] <- modelX$residuals
+
+country_coef <- results[grepl("id", names(results[,1])), "Estimate"] # get all country fixed effects
+
+# Create vectors of the length of the entire dataset so that each country has correct FE
+country_fe <- rep(c(0, country_coef), times = as.numeric(table(redistsample$id)))
+
+```
+
+```{r}
+
+# Step 1: M -- Model: Speculation on variables and relations between them
 population <- declare_population(
-  N = 858,
-  redist = sample(data$redist, N, replace = TRUE),
-  u_X = rnorm(N, sd = sd_X),
-  u_X_type = rnorm(N, df = sd_X_type)
+  country = add_level(
+    N = 18,  country_fe = rnorm(N)),
+ year = add_level(
+    N = 87, t = 1:N, nest = F),
+  obs = cross_levels(
+    by = join(country, year),
+    skew = runif(n = N, min=0, max=1),
+    gdpgrowth = rnorm(n = N, mean=0.192135, sd=0.213048),
+    u_i = country_fe + rnorm(N)/2
+  )
 )
+
 ```
 
 ```{r}
-fx <- function(a_X, b_X, u_X_type, u_X)
-a_X + (b_X + u_X_type) + u_X
 
-potentials <- declare_step(handler = fabricate, 
-  redist = fx(skew, a_X, b_X, u_X_type, u_X))
+# Step 2: M -- Model: Speculation on variables and relations between them
+fx <- function(X, Z,  country_fe, sd = 1) {
+  redist <- panelAR(X + Z + country_fe, sd)
+  return(redist)
+}
+
+outcomes<- declare_step(handler-fabricate,
+          redist1= fx(skew, gdpgrowth, country_fe)           
+          )
 ```
 
 ```{r}
-estimand <- declare_estimand(
-  ols = mean((fx(max(skew), a_X, b_X, u_X_type, u_X) - fx(min(skew), a_X, b_X, u_X_type, u_X))/(max(skew) - min(skew))))
+# Step 3 - Create Lagged DV
+lagged_dv <- function(data, lambda = 0.9){
+  within(data, {redist_lag <- NA
+                redist_lag[t == 1] <- 1 + u_i[t == 1]
+                for(j in 2:max(t)){
+                  redist_lag[t==j] <- (1-lambda) + lambda*redist_lag[t==(j - 1)] + u_i[t==j]
+                  }
+  })
+}
+
+add_dv <- declare_step(handler = lagged_dv)
 ```
 
 ```{r}
-estimator_1 <- declare_estimator(redist ~ skew, estimand = "ols", 
-model = lm_robust, label = "lm")
+  estimand <- declare_estimand(
+  ATE = mean((fx(max(skew), gdpgrowth, country_fe, sd = 1) -
+                   fx(min(skew), gdpgrowth, country_fe, sd = 1))/
+                   (max(skew)-min(skew))))
+```
+# D -- Data Strategy: Researcher interventions on the world
+## as the data was collected, there is no random assignment and as there was no sampling, there is also no sampling here 
+
+```{r}
+estimator_1 <- declare_estimator(redist1 ~ skew +gdpgrowth
+                                 , estimand = "ATE", 
+                                  model = panelAR,
+                                 se_type="pcse",
+                                 label = "panelAR")
+
 ```
 
 ```{r}
-lupu_pontusson_2011_design <- population + potentials + estimand + estimator_1
+lupu_pontusson_2011_design <- population + outcomes + add_dv + estimand + estimator_1
+```
+---
+
+```{r}
+
+
 ```

@@ -50,7 +50,7 @@ load("redistsample.Rdata")
 data<- redistsample
 
 #Step 2: Generate parameters
-modelX <- panelAR(redist ~ dvskew + dvratio9010 + as.factor(id),
+modelX <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
                 data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
                 panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
                 bound.rho=TRUE)
@@ -59,10 +59,8 @@ library(lmtest)
 results<- coeftest(modelX) #storing coefficients from model
 results
 a_X <- results["(Intercept)","Estimate"]
-b_X <- results["dvskew","Estimate"]
-c_X <- results["dvratio9010", "Estimate"]
-
-summary(redistsample$dvratio9010)
+b_X <- results["dvpratio9050","Estimate"]
+c_X <- results["dvpratio5010", "Estimate"]
 
 # Create vector of residuals
 u_X <- rep(NA, 87)
@@ -77,77 +75,124 @@ country_fe <- rep(c(0, country_coef), times = as.numeric(table(redistsample$id))
 ```
 
 ```{r}
-
 # Step 1: M -- Model: Speculation on variables and relations between them
 population <- declare_population(
   country = add_level(
-    N = 18,  country_fe = rnorm(N),
-    start = sample(1:87, 18, replace = TRUE)),
+    N = 18,  country_fe = rnorm(N)),
  year = add_level(
-    N = 87, t = 1:N, nest = F),
+    N = 45, t = 1:N, nest = F),
   obs = cross_levels(
     by = join(country, year),
-    skew = runif(n = N, min=0, max=1),
-    dvratio9010 = rnorm(n = N, mean=-1.41319, sd=0.39989),
+    dvpratio9050 = rnorm(n = N, mean=1.772, sd=0.176),
+    dvpratio5010 = rnorm(n = N, mean=1.731, sd=0.285),
     u_i = country_fe + rnorm(N)/2
   )
 )
+pop_frame<- population()
 
-reduce <- function(data) dplyr::filter(())
+#reduce <- function(data) dplyr::filter(())
 ```
 
 ```{r}
 
+modelX <- panelAR(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
+                data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
+                panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+                bound.rho=TRUE)
+summary(modelX)
+library(lmtest)
+results<- coeftest(modelX) #storing coefficients from model
+results
+a_X <- results["(Intercept)","Estimate"]
+b_X <- results["dvpratio9050","Estimate"]
+c_X <- results["dvpratio5010", "Estimate"]
+
+# Create vector of residuals
+u_X <- rep(NA, 87)
+names(u_X) <- rownames(redistsample)
+u_X[names(modelX$residuals)] <- modelX$residuals
+
+country_coef <- results[grepl("id", names(results[,1])), "Estimate"] # get all country fixed effects
+
 # Step 2: M -- Model: Speculation on variables and relations between them
-fx <- function(X, Z, u_c, u_i) {
-  # redist <- panelAR(X + Z + country_fe, sd)
-  redist <- a_X*X + b_Z*Z + u_c + u_i)
+fx <- function(X, Z, e) {
+  redist <- b_X*X + c_X*Z + e 
   return(redist)
 }
 
-outcomes<- declare_step(handler-fabricate,
-          redist1= fx(skew, dvratio9010, country_fe)           
+lagged_dv <- function(redistsample, lambda = .9) {
+  within(redistsample, {Y <- NA
+                Y[t == 1] <- 1 + u_i[t == 1]
+                for(j in 2:max(t))  {Y[t==j] <- (1-lambda) + lambda*Y[t==(j - 1)] + u_i[t==j]}
+                })
+                 }
+
+add_dv <- declare_step(handler = lagged_dv)
+
+
+outcomes<- declare_step(handler=fabricate,
+          redist1= fx(dvpratio9050, dvpratio5010, u_X)           
           )
 ```
 
 ```{r}
-# Step 3 - Create Lagged DV
-lagged_dv <- function(data, lambda = 0.9){
-  within(data, {redist_lag <- NA
-                redist_lag[t == 1] <- 1 + u_i[t == 1]
-                for(j in 2:max(t)){
-                  redist_lag[t==j] <- (1-lambda) + lambda*redist_lag[t==(j - 1)] + u_i[t==j]
-                  }
-  })
+
+```
+
+```{r}
+# Step 4 - Create Missingness - first go is easy and MAR
+miss_function <- function(redistsample, m=771){ # m is number of missing cases
+  redistsample[sort(sample(1:nrow(redistsample), nrow(redistsample)-m)),]
 }
 
-add_dv <- declare_step(handler = lagged_dv)
+missingness <- declare_step(miss_function)
+
+
 ```
 
 ```{r}
   estimand <- declare_estimand(
-  ATE = mean((fx(max(skew), dvratio9010, country_fe, sd = 1) -
-                   fx(min(skew), dvratio9010, country_fe, sd = 1))/
-                   (max(skew)-min(skew))))
+  SPO= mean((fx(max(dvpratio9050/dvpratio5010), country_fe, u_X)) -
+                   fx(min(dvpratio9050/dvpratio5010),country_fe, u_X))/
+                   (max(dvpratio9050/dvpratio5010)-min(dvpratio9050/dvpratio5010)))
 ```
 # D -- Data Strategy: No random sampling given the study uses observational data
 
 ```{r}
-estimator_1 <- declare_estimator(redist1 ~ skew +gdpgrowth
-                                 , estimand = "ATE", 
+estimator_1 <- declare_estimator(redist1 ~ (dvpratio9050/dvpratio5010), country_fe
+                                 , estimand = "SPO", 
                                   model = panelAR,
-                                 se_type="pcse",
+                                 timeVar="t",
+                                 panelVar= "country",
+                                 autoCorr='ar1',
+                                  panelCorrMethod='pcse',
+                                 rhotype="breg", 
+                                 rho.na.rm=TRUE,
+                                 panel.weight='t-1',
+                          
                                  label = "panelAR")
+
 
 ```
 
 ```{r}
-lupu_pontusson_2011_design <- population + outcomes + add_dv + estimand + estimator_1
+lupu_pontusson_2011_design <- population  + outcomes + missingness+ estimand + estimator_1
 ```
 ---
 #Diagnosis
 ```{r}
-library(fabricate)
+library(knitr)
+
+plot(redistsample$redist, redistsample$dvskew)
+plot(pop_frame$redist1, pop_frame$dvpratio9050)
+
 kable(reshape_diagnosis(diagnose_design(lupu_pontusson_2011_design, sims = 500)))
+
+diagnosis <- diagnose_design(
+  design = lupu_pontusson_2011_design, 
+  sims = 500
+)
+
+kable(reshape_diagnosis((diagnosis)))
 
 ```

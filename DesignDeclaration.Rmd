@@ -54,15 +54,15 @@ modelX <- panelAR(redist ~ dvskew + dvratio9010 + as.factor(id),
                 data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
                 panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
                 bound.rho=TRUE)
-
+summary(modelX)
 library(lmtest)
 results<- coeftest(modelX) #storing coefficients from model
 results
 a_X <- results["(Intercept)","Estimate"]
-b_X <- results["skew","Estimate"]
-c_X <- results["9010ratio", "Estimate"]
+b_X <- results["dvskew","Estimate"]
+c_X <- results["dvratio9010", "Estimate"]
 
-summary(data$gdpgrowth)
+summary(redistsample$dvratio9010)
 
 # Create vector of residuals
 u_X <- rep(NA, 87)
@@ -81,29 +81,32 @@ country_fe <- rep(c(0, country_coef), times = as.numeric(table(redistsample$id))
 # Step 1: M -- Model: Speculation on variables and relations between them
 population <- declare_population(
   country = add_level(
-    N = 18,  country_fe = rnorm(N)),
+    N = 18,  country_fe = rnorm(N),
+    start = sample(1:87, 18, replace = TRUE)),
  year = add_level(
     N = 87, t = 1:N, nest = F),
   obs = cross_levels(
     by = join(country, year),
     skew = runif(n = N, min=0, max=1),
-    gdpgrowth = rnorm(n = N, mean=0.192135, sd=0.213048),
+    dvratio9010 = rnorm(n = N, mean=-1.41319, sd=0.39989),
     u_i = country_fe + rnorm(N)/2
   )
 )
 
+reduce <- function(data) dplyr::filter(())
 ```
 
 ```{r}
 
 # Step 2: M -- Model: Speculation on variables and relations between them
-fx <- function(X, Z,  country_fe, sd = 1) {
-  redist <- panelAR(X + Z + country_fe, sd)
+fx <- function(X, Z, u_c, u_i) {
+  # redist <- panelAR(X + Z + country_fe, sd)
+  redist <- a_X*X + b_Z*Z + u_c + u_i)
   return(redist)
 }
 
 outcomes<- declare_step(handler-fabricate,
-          redist1= fx(skew, gdpgrowth, country_fe)           
+          redist1= fx(skew, dvratio9010, country_fe)           
           )
 ```
 
@@ -123,12 +126,11 @@ add_dv <- declare_step(handler = lagged_dv)
 
 ```{r}
   estimand <- declare_estimand(
-  ATE = mean((fx(max(skew), gdpgrowth, country_fe, sd = 1) -
-                   fx(min(skew), gdpgrowth, country_fe, sd = 1))/
+  ATE = mean((fx(max(skew), dvratio9010, country_fe, sd = 1) -
+                   fx(min(skew), dvratio9010, country_fe, sd = 1))/
                    (max(skew)-min(skew))))
 ```
-# D -- Data Strategy: Researcher interventions on the world
-## as the data was collected, there is no random assignment and as there was no sampling, there is also no sampling here 
+# D -- Data Strategy: No random sampling given the study uses observational data
 
 ```{r}
 estimator_1 <- declare_estimator(redist1 ~ skew +gdpgrowth
@@ -143,8 +145,9 @@ estimator_1 <- declare_estimator(redist1 ~ skew +gdpgrowth
 lupu_pontusson_2011_design <- population + outcomes + add_dv + estimand + estimator_1
 ```
 ---
-
+#Diagnosis
 ```{r}
-
+library(fabricate)
+kable(reshape_diagnosis(diagnose_design(lupu_pontusson_2011_design, sims = 500)))
 
 ```

@@ -21,41 +21,46 @@ library('DeclareDesign')
 library('panelAR')
 ```
 
-```{r}
-
-
 ## Declare Design
 
-#Model (M): The paper tests the social affinity hypothesis that predicts middle-income voters will support redistribution policies when the distance between the middle and poor is small relative to the distance between the middle and the affluent (skew).
+* Model (M): The paper tests the social affinity hypothesis that predicts middle-income voters will support redistribution policies when the distance between the middle and poor is small relative to the distance between the middle and the affluent (skew). (pg. 317)
 
-#Inquiry (I):
+* Inquiry (I): The study attempts to estimate parameter 
 
-#Data Strategy (D): The study uses country-year data on redistribution (% change in Gini coefficients brought about by taxes and government transfers) and non-elderly social spending for 18 OECD countries for the period 1969-2005. The data is purely observational and does not involve sampling. 
+$\beta$ from the simple model
 
-#Answer Strategy (A): 
-```
+$y_i = \alpha + \beta x_i + \epsilon$. 
+
+This can be conceptualized as the summary of all potential outcomes across conditions $\beta$ for all units. More specifically, this would be all potential outcomes of redistribution conditional on inequality measured in a variety of ways, such as skew. We assume that this model describes the true data generating process.
+
+* Data Strategy (D): The study uses country-year data on redistribution (% change in Gini coefficients brought about by taxes and government transfers) and non-elderly social spending for 18 OECD countries for the period 1969-2005. The data is purely observational and does not involve sampling. 
+
+* Answer Strategy (A): The authors use a variety of different answer strategies. To simplify the design declaration, we focus on their basic model specification, which can be written as:
+
+$$
+R_{i,t} = \alpha + \beta X_{i,t} + \gamma R_{i, t-1} + \epsilon_{i,t}
+$$
+
+Where for each country $i$ and year $t$, $R_{i,t}$ refers to redistribution, $\alpha$ is the constant, $\beta$ is the coefficient for a measure of inequality (e.g. we are using skew and the 9010 ratiobelow), $\gamma$ is the coefficient for redistribution lagged by one year ($R_{i,t-1}$) and  $\epsilon_{i,t}$ is the error term.
 
 ```{r}
-
-# We model the primary specifications used to measure redistribution outcomes (Table 2, Columns 3 and 7)
-
+# We model the primary specifications used to measure redistribution outcomes (Table 2, Column 7)
 #Step 1: Load actual data
 load("redistsample.Rdata")
 data<- redistsample
 
 #Step 2: Generate parameters
-modelX <- panelAR(redist ~ skew + gdpgrowth + as.factor(id),
+modelX <- panelAR(redist ~ dvskew + dvratio9010 + as.factor(id),
                 data=redistsample, panelVar='id', timeVar='time', autoCorr='ar1',
                 panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
                 bound.rho=TRUE)
 
-#install.packages("lmtest")
-#library(lmtest)
+library(lmtest)
 results<- coeftest(modelX) #storing coefficients from model
 results
 a_X <- results["(Intercept)","Estimate"]
 b_X <- results["skew","Estimate"]
-c_X <- results["gdpgrowth", "Estimate"]
+c_X <- results["9010ratio", "Estimate"]
 
 summary(data$gdpgrowth)
 

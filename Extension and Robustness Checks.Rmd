@@ -23,7 +23,7 @@ disagdata_countries <- lapply(unique(disag_data$country), function(x)
   subset(disag_data, disag_data$country==x)
 )
 
-library(mice)
+library('mice')
 data_imputed<-complete(mice(disag_data,m=5,maxit=50,meth='pmm',seed=500))
 ```
 
@@ -195,3 +195,4 @@ mod2b_out5<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dv
                bound.rho=TRUE) 
 summary(mod2b_out5)
 ```
+

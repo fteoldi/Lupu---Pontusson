@@ -199,7 +199,7 @@ for (a in 0:11) {
   )
   
 data[,156+a][is.na(data[,35]) & !is.na(data[,4])] <- 
-  data[,45][is.na(data[,35]) & !is.na(data[,4])]
+  data[,45+a*10][is.na(data[,35]) & !is.na(data[,4])]
 }
 
 data <- data[,c(1:35,156:167)]

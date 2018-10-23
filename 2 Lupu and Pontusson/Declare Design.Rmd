@@ -1,0 +1,163 @@
+---
+title: "Replication: The Structure of Inequality and the Politics of Redistribution"
+author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
+date: "October 23rd, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(2172)
+```
+
+```{r}
+library('DeclareDesign')
+library('knitr')
+```
+
+```{r}
+load("redistsample.Rdata")
+data <- redistsample
+
+# Plot main relationship of interest:
+plot(data$redist, data$dvskew)
+```
+
+## Population
+
+```{r}
+population <- declare_population(
+  country = add_level(
+    N = 18, country_fe = rnorm(N)),
+  year = add_level(
+    N = 46, t = 1:N, nest = FALSE),
+  obs = cross_levels(
+    by = fabricatr::join(country, year),
+    skew = rnorm(n = N, mean=1.039, sd=0.113),
+    error_i = country_fe + rnorm(N)/2
+  )
+)
+
+hist(data$dvskew)
+hist(population()$skew)
+```
+
+## Model
+
+```{r}
+library('panelAR')
+
+# Get parameters
+
+modelX <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
+                data=redistsample, panelVar='id', timeVar='time',
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
+summary(modelX)
+
+library(lmtest)
+results<- coeftest(modelX) #storing coefficients from model
+results
+a_X <- results["(Intercept)","Estimate"]
+b_X <- results["dvskew","Estimate"]
+
+redist_fun <- function(skew, country_fe, error_i, sd = 1) {
+  redist <- a_X + b_X*skew + country_fe + error_i
+  return(redist)
+}
+```
+
+## Outcomes
+
+```{r}
+outcomes <- declare_step(handler = fabricate,
+          redist = redist_fun(skew, country_fe, error_i)
+)
+
+library('dplyr')
+fabricated_data <- population() %>% outcomes
+
+hist(data$redist)
+hist(fabricated_data$redist)
+plot(fabricated_data$skew, fabricated_data$redist)
+```
+
+### Lagged dependent variable
+
+```{r}
+lagged_dv <- function(data, lambda = 0.9){ # think about lambda
+  within(data, {redist_l1 <- NA
+                redist_l1[t == 1] <- 1 + country_fe[t == 1]
+                for(j in 2:max(t)){
+                  redist_l1[t==j] <- (1-lambda) + lambda*redist_l1[t==(j - 1)] + country_fe[t==j]
+                  }
+  })
+}
+
+add_dv <- declare_step(handler = lagged_dv)
+
+fabricated_data <- population() %>% outcomes %>% add_dv
+```
+
+### Missingness at random
+
+```{r}
+miss_function <- function(data=data, m=741, prob=rep(1/828, 828)){ # m is number of missing cases
+  data[sort(sample(1:nrow(data), nrow(data)-m, replace = F, prob = prob)),]
+}
+
+missingness <- declare_step(handler = miss_function)
+fabricated_data_m <- population() %>% outcomes %>% add_dv %>% missingness
+hist(data$redist)
+hist(fabricated_data_m$redist)
+plot(fabricated_data_m$skew, fabricated_data_m$redist)
+```
+
+## Estimand
+
+```{r}
+estimand <- declare_estimand(
+  SPO = mean((redist_fun(max(skew), country_fe, error_i) - redist_fun(min(skew), country_fe, error_i))/(max(skew)-min(skew))))
+```
+
+## Estimator
+
+```{r}
+# Model A: naive OLS
+estimator_OLS <- declare_estimator(redist ~ skew, estimand = estimand,
+                               model = lm_robust,
+                               se_type = "HC1",
+                               label = "OLS")
+
+# Model B: lagged DV
+estimator_LDV <- declare_estimator(redist ~ skew + redist_l1, 
+                               estimand = estimand,
+                               model = lm_robust,
+                               se_type = "HC1",
+                               label = "LDV")
+
+# Model C: country fixed effects
+estimator_CFE <- declare_estimator(redist ~ skew, estimand = estimand,
+                               model = lm_robust,
+                               fixed_effects = country_fe,
+                               se_type = "HC1",
+                               label = "CFE")
+```
+
+## Design
+
+```{r}
+temp_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV + estimator_CFE
+```
+
+## Diagnosis
+
+```{r}
+diagnosis <- diagnose_design(
+  design = temp_design, 
+  sims = 500
+)
+
+# Normal Design
+kable(reshape_diagnosis((diagnosis)))
+```

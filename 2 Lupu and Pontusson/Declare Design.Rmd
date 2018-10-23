@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 set.seed(2172)
 ```
 
@@ -147,14 +147,14 @@ estimator_CFE <- declare_estimator(redist ~ skew, estimand = estimand,
 ## Design
 
 ```{r}
-temp_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV + estimator_CFE
+lupu_pontusson_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV + estimator_CFE
 ```
 
 ## Diagnosis
 
 ```{r}
 diagnosis <- diagnose_design(
-  design = temp_design, 
+  design = lupu_pontusson_design, 
   sims = 500
 )
 

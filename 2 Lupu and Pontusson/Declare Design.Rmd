@@ -2,7 +2,7 @@
 title: "Replication: The Structure of Inequality and the Politics of Redistribution"
 author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
 date: "October 23rd, 2018"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}

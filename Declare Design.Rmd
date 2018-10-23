@@ -7,6 +7,22 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+set.seed(2172)
+```
+
+```{r}
+library('DeclareDesign')
+library('knitr')
+```
+
+Model
+
+```{r}
+load("redistsample.Rdata")
+data <- redistsample
+
+# Plot main relationship of interest:
+plot(data$redist, data$dvskew)
 ```
 
 Population
@@ -16,20 +32,20 @@ population <- declare_population(
   country = add_level(
     N = 18, country_fe = rnorm(N)),
   year = add_level(
-    N = 46, t = 1960:2005, nest = FALSE),
+    N = 46, t = 1:N, nest = FALSE),
   obs = cross_levels(
     by = fabricatr::join(country, year),
     skew = rnorm(n = N, mean=1.039, sd=0.113),
     error_i = country_fe + rnorm(N)/2
   )
 )
+
+hist(data$dvskew)
+hist(population()$skew)
 ```
 
-Model
-
 ```{r}
-load("redistsample.Rdata")
-data <- redistsample
+library('panelAR')
 
 # Get parameters
 
@@ -57,6 +73,27 @@ Outcomes
 outcomes <- declare_step(handler = fabricate,
           redist = redist_fun(skew, country_fe, error_i)
 )
+
+library('dplyr')
+fabricated_data <- population() %>% outcomes
+
+
+hist(data$redist)
+hist(fabricated_data$redist)
+plot(fabricated_data$skew, fabricated_data$redist)
+```
+
+```{r}
+lagged_dv <- function(data, lambda = 0.9){ # think about lambda
+  within(data, {redist_l1 <- NA
+                redist_l1[t == 1] <- 1 + country_fe[t == 1]
+                for(j in 2:max(t)){
+                  redist_l1[t==j] <- (1-lambda) + lambda*redist_l1[t==(j - 1)] + country_fe[t==j]
+                  }
+  })
+}
+
+add_dv <- declare_step(handler = lagged_dv)
 ```
 
 Estimand
@@ -69,23 +106,24 @@ estimand <- declare_estimand(
 Estimator
 
 ```{r}
-estimator <- declare_estimator(redist ~ skew, estimand = estimand,
+# Model A
+estimator_OLS <- declare_estimator(redist ~ skew, estimand = estimand,
                                model = lm_robust,
                                se_type = "HC1",
                                label = "OLS")
+
+# Model B
+estimator_LDV <- declare_estimator(redist ~ skew + redist_l1, 
+                               estimand = estimand,
+                               model = lm_robust,
+                               se_type = "HC1",
+                               label = "LDV")
 ```
 
 Design
 
 ```{r}
-temp_design <- population + outcomes + estimand + estimator
-```
-
-Test
-
-```{r}
-library(dplyr)
-df1 <- population() %>% outcomes
+temp_design <- population + outcomes + add_dv + estimand + estimator_OLS + estimator_LDV
 ```
 
 Diagnosis

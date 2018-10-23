@@ -25,7 +25,7 @@ library('panelAR')
 
 * Model (M): The paper tests the social affinity hypothesis that predicts middle-income voters will support redistribution policies when the distance between the middle and poor is small relative to the distance between the middle and the affluent (skew). (pg. 317)
 
-* Inquiry (I): The study attempts to estimate parameter 
+* Inquiry (I): The study attempts to estimate parameter
 
 $\beta$ from the simple model
 
@@ -71,7 +71,6 @@ country_coef <- results[grepl("id", names(results[,1])), "Estimate"] # get all c
 
 # Create vectors of the length of the entire dataset so that each country has correct FE
 country_fe <- rep(c(0, country_coef), times = as.numeric(table(redistsample$id)))
-
 ```
 
 ```{r}
@@ -83,7 +82,7 @@ population <- declare_population(
     N = 45, t = 1:N, nest = F),
   obs = cross_levels(
     by = join(country, year),
-    dvpratio9050 = rnorm(n = N, mean=1.772, sd=0.176),
+    dvpratio9050 = rnorm(n = N, mean=1.0388, sd=0.176),
     dvpratio5010 = rnorm(n = N, mean=1.731, sd=0.285),
     u_i = country_fe + rnorm(N)/2
   )
@@ -131,13 +130,10 @@ add_dv <- declare_step(handler = lagged_dv)
 
 
 outcomes<- declare_step(handler=fabricate,
-          redist1= fx(dvpratio9050, dvpratio5010, u_X)           
+          redist1= fx(dvpratio9050, dvpratio5010, u_i)           
           )
 ```
 
-```{r}
-
-```
 
 ```{r}
 # Step 4 - Create Missingness - first go is easy and MAR
@@ -176,7 +172,16 @@ estimator_1 <- declare_estimator(redist1 ~ (dvpratio9050/dvpratio5010), country_
 ```
 
 ```{r}
-lupu_pontusson_2011_design <- population  + outcomes + missingness+ estimand + estimator_1
+lupu_pontusson_2011_design <- population  + outcomes + missingness + estimand + estimator_1
+
+temp_design <- population + outcomes + estimand
+
+temp_design <- population  + outcomes + missingness + estimand
+library(dplyr)
+df <- population()  %>% outcomes %>% missingness %>% estimand
+head(population())
+outcomes()
+
 ```
 ---
 #Diagnosis
@@ -186,7 +191,7 @@ library(knitr)
 plot(redistsample$redist, redistsample$dvskew)
 plot(pop_frame$redist1, pop_frame$dvpratio9050)
 
-kable(reshape_diagnosis(diagnose_design(lupu_pontusson_2011_design, sims = 500)))
+kable(reshape_diagnosis(diagnose_design(temp_design, sims = 500)))
 
 diagnosis <- diagnose_design(
   design = lupu_pontusson_2011_design, 

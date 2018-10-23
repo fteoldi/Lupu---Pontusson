@@ -1,0 +1,101 @@
+---
+title: "Replication: The Structure of Inequality and the Politics of Redistribution"
+author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
+date: "October 23rd, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Population
+
+```{r}
+population <- declare_population(
+  country = add_level(
+    N = 18, country_fe = rnorm(N)),
+  year = add_level(
+    N = 46, t = 1960:2005, nest = FALSE),
+  obs = cross_levels(
+    by = fabricatr::join(country, year),
+    skew = rnorm(n = N, mean=1.039, sd=0.113),
+    error_i = country_fe + rnorm(N)/2
+  )
+)
+```
+
+Model
+
+```{r}
+load("redistsample.Rdata")
+data <- redistsample
+
+# Get parameters
+
+modelX <- panelAR(redist ~ dvratio9010 + dvskew + as.factor(id), 
+                data=redistsample, panelVar='id', timeVar='time',
+                autoCorr='ar1', panelCorrMethod='pcse',rho.na.rm=TRUE,
+                panel.weight='t-1', bound.rho=TRUE)
+summary(modelX)
+
+library(lmtest)
+results<- coeftest(modelX) #storing coefficients from model
+results
+a_X <- results["(Intercept)","Estimate"]
+b_X <- results["dvskew","Estimate"]
+
+redist_fun <- function(skew, country_fe, error_i, sd = 1) {
+  redist <- a_X + b_X*skew + country_fe + error_i
+  return(redist)
+}
+```
+
+Outcomes
+
+```{r}
+outcomes <- declare_step(handler = fabricate,
+          redist = redist_fun(skew, country_fe, error_i)
+)
+```
+
+Estimand
+
+```{r}
+estimand <- declare_estimand(
+  SPO = mean((redist_fun(max(skew), country_fe, error_i) - redist_fun(min(skew), country_fe, error_i))/(max(skew)-min(skew))))
+```
+
+Estimator
+
+```{r}
+estimator <- declare_estimator(redist ~ skew, estimand = estimand,
+                               model = lm_robust,
+                               se_type = "HC1",
+                               label = "OLS")
+```
+
+Design
+
+```{r}
+temp_design <- population + outcomes + estimand + estimator
+```
+
+Test
+
+```{r}
+library(dplyr)
+df1 <- population() %>% outcomes
+```
+
+Diagnosis
+
+```{r}
+diagnosis <- diagnose_design(
+  design = temp_design, 
+  sims = 500
+)
+
+# Normal Design
+kable(reshape_diagnosis((diagnosis)))
+```

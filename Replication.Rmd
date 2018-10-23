@@ -567,7 +567,7 @@ collapse1 <- summaryBy(stdpjoint + skew + stdpdisp_gall + dreher + fpop + turnou
 library('lmtest')
 library('sandwich')
 
-out24<- lm(stdpjoint.m~skew.m + stdpdisp_gall.m + turnout.m, data=collapse1)
+out24 <- lm(stdpjoint.m~skew.m + stdpdisp_gall.m + turnout.m, data=collapse1)
 out24
 coeftest(out24, vcov = vcovHC(out24, type="HC1"))
 ```

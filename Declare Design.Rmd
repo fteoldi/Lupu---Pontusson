@@ -123,24 +123,31 @@ estimand <- declare_estimand(
 Estimator
 
 ```{r}
-# Model A
+# Model A: naive OLS
 estimator_OLS <- declare_estimator(redist ~ skew, estimand = estimand,
                                model = lm_robust,
                                se_type = "HC1",
                                label = "OLS")
 
-# Model B
+# Model B: lagged DV
 estimator_LDV <- declare_estimator(redist ~ skew + redist_l1, 
                                estimand = estimand,
                                model = lm_robust,
                                se_type = "HC1",
                                label = "LDV")
+
+# Model C: country fixed effects
+estimator_CFE <- declare_estimator(redist ~ skew, estimand = estimand,
+                               model = lm_robust,
+                               fixed_effects = country_fe,
+                               se_type = "HC1",
+                               label = "CFE")
 ```
 
 Design
 
 ```{r}
-temp_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV
+temp_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV + estimator_CFE
 ```
 
 Diagnosis

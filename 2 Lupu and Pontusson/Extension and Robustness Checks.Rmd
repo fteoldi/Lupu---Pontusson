@@ -2,11 +2,12 @@
 title: "Extension and Robustness Checks: The Structure of Inequality and the Politics of Redistribution"
 author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
 date: "October 23rd, 2018"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+set.seed(2172)
 ```
 
 # Extension: Disaggregating Social Spending Outcomes
@@ -29,7 +30,7 @@ data_imputed<-complete(mice(disag_data,m=5,maxit=50,meth='pmm',seed=500))
 
 ## Merging and cleaning merged data
 ```{r}
-#load("data_socspend.Rdata")
+load("data_socspend.Rdata")
 merged <- merge(data_socspend, data_imputed, by=c("country","year"))
 
 #Creating lags for each dependent variable
@@ -198,7 +199,6 @@ summary(mod2b_out5)
 
 #Model Extensions/Modifications
 ```{r}
-
 #OLS
 load("redistsample.Rdata")
 data<- redistsample

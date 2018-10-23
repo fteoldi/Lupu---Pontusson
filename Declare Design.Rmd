@@ -77,7 +77,6 @@ outcomes <- declare_step(handler = fabricate,
 library('dplyr')
 fabricated_data <- population() %>% outcomes
 
-
 hist(data$redist)
 hist(fabricated_data$redist)
 plot(fabricated_data$skew, fabricated_data$redist)
@@ -94,6 +93,24 @@ lagged_dv <- function(data, lambda = 0.9){ # think about lambda
 }
 
 add_dv <- declare_step(handler = lagged_dv)
+
+fabricated_data <- population() %>% outcomes %>% add_dv
+hist(fabricated_data$redist_l1)
+plot(fabricated_data$skew, fabricated_data$redist_l1)
+```
+
+Missingness at random
+
+```{r}
+miss_function <- function(data=data, m=741, prob=rep(1/828, 828)){ # m is number of missing cases
+  data[sort(sample(1:nrow(data), nrow(data)-m, replace = F, prob = prob)),]
+}
+
+missingness <- declare_step(handler = miss_function)
+fabricated_data_m <- population() %>% outcomes %>% add_dv %>% missingness
+hist(data$redist)
+hist(fabricated_data_m$redist)
+plot(fabricated_data_m$skew, fabricated_data_m$redist)
 ```
 
 Estimand
@@ -123,7 +140,7 @@ estimator_LDV <- declare_estimator(redist ~ skew + redist_l1,
 Design
 
 ```{r}
-temp_design <- population + outcomes + add_dv + estimand + estimator_OLS + estimator_LDV
+temp_design <- population + outcomes + add_dv + missingness + estimand + estimator_OLS + estimator_LDV
 ```
 
 Diagnosis

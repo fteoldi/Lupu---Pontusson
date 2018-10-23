@@ -2,11 +2,12 @@
 title: "Extension and Robustness Checks: The Structure of Inequality and the Politics of Redistribution"
 author: "Filippo Teoldi, Zara Riaz and Julian Gerez"
 date: "October 23rd, 2018"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+set.seed(2172)
 ```
 
 # Extension: Disaggregating Social Spending Outcomes
@@ -29,7 +30,7 @@ data_imputed<-complete(mice(disag_data,m=5,maxit=50,meth='pmm',seed=500))
 
 ## Merging and cleaning merged data
 ```{r}
-#load("data_socspend.Rdata")
+load("data_socspend.Rdata")
 merged <- merge(data_socspend, data_imputed, by=c("country","year"))
 
 #Creating lags for each dependent variable
@@ -205,7 +206,7 @@ data<- redistsample
 
 #Main model (using 90/50 and 50/10 ratios)
 
-install.packages("estimatr")
+#install.packages("estimatr")
 library(estimatr)
 ols1 <- lm_robust(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
                   dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
@@ -218,6 +219,7 @@ summary(ols1)
 ols2 <- lm(redist ~ dvpratio9050 + dvpratio5010 ,
                 data=redistsample)
 summary(ols2)
+library(lmtest)
 coeftest(ols2)
 
 
@@ -228,7 +230,7 @@ ols3 <- lm(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
 summary(ols3)
 coeftest(ols3)
 
-install.packages("plm")
+#install.packages("plm")
 library("plm")
 library("sandwich")
 waldtest(ols2, ols3, vcov = vcovHC)
@@ -294,23 +296,7 @@ data2yr_socspend$time <- unlist(by(
 
 #Running models with 2 year averages
 ```{r}
-library(panelAR)
-twoyear1 <- panelAR(socspend ~ socspend_lag + ma2_pratio9050s + ma2_pratio5010s + ma2_pop65 +
-                  ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union +
-                  ma2_unempl + ma2_dreher + gdpgrowth, 
-                data=data2yr_socspend , panelVar='id', timeVar='time', 
-                autoCorr='psar1', panelCorrMethod='pcse',
-                rho.na.rm=TRUE, bound.rho=TRUE)
-summary(twoyear1)
 
-#Without controls
-
-twoyear2 <- panelAR(socspend ~ ma2_pratio9050s + ma2_pratio5010s +gdpgrowth + as.factor(id), data=data2yr_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
-summary(twoyear2)
-
-#With skew
-twoyear3 <- panelAR(socspend ~ socspend_lag + ma2_pratio9010s + ma2_skews + ma2_pop65+ ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union + ma2_unempl + ma2_dreher + gdpgrowth, data=data2yr_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
-summary(twoyear3)
 ```
 
 #Defining skew as the difference rather than ratio
@@ -337,4 +323,18 @@ summary(socspend_skew)
 
 ```
 
+```{r}
 
+twoyear1 <- panelAR(socspend ~ socspend_lag + ma2_pratio9050s + ma2_pratio5010s + ma2_pop65 +
+                  ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union +
+                  ma2_unempl + ma2_dreher + gdpgrowth, 
+                data=data2yr_socspend , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+              rho.na.rm=TRUE, bound.rho=TRUE)
+summary(twoyear1)
+
+#With skew
+twoyear3 <- panelAR(socspend ~ socspend_lag + ma2_pratio9010s + ma2_skews + ma2_pop65+ ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union + ma2_unempl + ma2_dreher + gdpgrowth, data=data2yr_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(twoyear3)
+
+```

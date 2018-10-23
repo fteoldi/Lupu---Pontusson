@@ -1,7 +1,0 @@
-\beamer@subsectionintoc {0}{1}{Aim of the paper}{4}{0}{0}
-\beamer@subsectionintoc {0}{2}{Design declaration}{7}{0}{0}
-\beamer@subsectionintoc {0}{3}{Empirical set-up and results}{8}{0}{0}
-\beamer@subsectionintoc {0}{4}{Robustness check}{13}{0}{0}
-\beamer@subsectionintoc {0}{5}{Extensions}{14}{0}{0}
-\beamer@subsectionintoc {0}{6}{Conclusion}{19}{0}{0}
-\beamer@subsectionintoc {0}{7}{Appendix}{23}{0}{0}

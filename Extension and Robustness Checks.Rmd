@@ -9,7 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Extension
+# Extension: Disaggregating Social Spending Outcomes
 
 ```{r}
 library('haven')
@@ -29,9 +29,8 @@ data_imputed<-complete(mice(disag_data,m=5,maxit=50,meth='pmm',seed=500))
 
 ## Merging and cleaning merged data
 ```{r}
-load("data_socspend.Rdata")
+#load("data_socspend.Rdata")
 merged <- merge(data_socspend, data_imputed, by=c("country","year"))
-
 
 #Creating lags for each dependent variable
 merged$fambenefits_lag <- unlist(by(merged ,merged$id, 
@@ -195,4 +194,147 @@ mod2b_out5<- panelAR(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dv
                bound.rho=TRUE) 
 summary(mod2b_out5)
 ```
+
+
+#Model Extensions/Modifications
+```{r}
+
+#OLS
+load("redistsample.Rdata")
+data<- redistsample
+
+#Main model (using 90/50 and 50/10 ratios)
+
+install.packages("estimatr")
+library(estimatr)
+ols1 <- lm_robust(redist ~ redist_lag + dvpratio9050 + dvpratio5010 + dvturnout +
+                  dvfempar + dvstddisp_gall + dvpvoc + dvunion + dvunempl,
+                data=redistsample)
+summary(ols1)
+
+
+#Main model without country FEs or controls
+
+ols2 <- lm(redist ~ dvpratio9050 + dvpratio5010 ,
+                data=redistsample)
+summary(ols2)
+coeftest(ols2)
+
+
+#Main model with country FEs and no controls
+
+ols3 <- lm(redist ~ dvpratio9050 + dvpratio5010 + as.factor(id),
+                data=redistsample)
+summary(ols3)
+coeftest(ols3)
+
+install.packages("plm")
+library("plm")
+library("sandwich")
+waldtest(ols2, ols3, vcov = vcovHC)
+
+# Main model replacing ratios with skew
+
+ols4<- lm_robust(redist ~ redist_lag + dvratio9010 + dvskew + dvturnout + dvfempar +
+                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample)
+summary(ols4)
+coeftest(ols4)
+
+#Main Social Spending Model
+
+data_socspend <- data[,c(1:3, 18, 20, 48:62 )]
+
+data_socspend  <- data_socspend [with(data_socspend , order(id, year)),]
+
+data_socspend$socspend_lag <- unlist(by(data_socspend ,data_socspend$id,                                    function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
+
+#Main model (using 90/50 and 50/10 ratios)
+ols5<- lm_robust(socspend ~ socspend_lag + ma_pratio9050s + ma_pratio5010s + ma_pop65 +
+                  ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union +
+                  ma_unempl + ma_dreher + gdpgrowth, 
+                data=data_socspend)
+summary(ols5)
+coeftest(ols5)
+
+#Main model with country FEs and no controls
+ols7 <- lm_robust(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth, data=data_socspend)
+summary(ols7)
+
+#Main model with country FEs and no controls
+ols8 <- lm_robust(socspend ~ ma_pratio9050s + ma_pratio5010s +gdpgrowth + as.factor(id), data=data_socspend)
+summary(ols8)
+# Main model replacing ratios with skew
+ols9<- lm_robust(socspend ~ socspend_lag + ma_pratio9010s + ma_skews + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend)
+summary(ols9)
+
+```
+
+#Social Spending Robustness: 2 year moving-averages 
+```{r}
+#How slow moving is the process? -Using 2 year moving averages 
+
+data_2yr <- cbind(data, sapply(c(20, 26:27, 32, 34, 21, 15, 22:23, 10:13, 29:30), function(b)
+  (lag(data[,b], 1)+lag(data[,b], 2))/2
+))
+
+names(data_2yr)[65:79] <- c("ma2_socspend", "ma2_pratio9050s", "ma2_pratio5010s",
+                        "ma2_pratio9010s", "ma2_skews", "ma2_dreher", "ma2_pop65",
+                        "ma2_stdpjoint", "ma2_stddisp_gall", "ma2_fempar", "ma2_unempl",
+                        "ma2_union", "ma2_turnout", "ma2_pvoc", "ma2_fpop")
+
+data2yr_socspend <- data_2yr[,c(1:3, 18, 20, 65:79 )]
+
+data2yr_socspend  <- data2yr_socspend [with(data_socspend , order(id, year)),]
+
+data2yr_socspend$socspend_lag <- unlist(by(data2yr_socspend ,data2yr_socspend$id,                                    function(x){c(NA,x[,"socspend"][1:(length(x[,"socspend"])-1)])}))
+
+data2yr_socspend$time <- unlist(by(
+  data2yr_socspend ,data2yr_socspend $id,function(x) seq(1:nrow(x))))
+```
+
+#Running models with 2 year averages
+```{r}
+library(panelAR)
+twoyear1 <- panelAR(socspend ~ socspend_lag + ma2_pratio9050s + ma2_pratio5010s + ma2_pop65 +
+                  ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union +
+                  ma2_unempl + ma2_dreher + gdpgrowth, 
+                data=data2yr_socspend , panelVar='id', timeVar='time', 
+                autoCorr='psar1', panelCorrMethod='pcse',
+                rho.na.rm=TRUE, bound.rho=TRUE)
+summary(twoyear1)
+
+#Without controls
+
+twoyear2 <- panelAR(socspend ~ ma2_pratio9050s + ma2_pratio5010s +gdpgrowth + as.factor(id), data=data2yr_socspend , panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE)
+summary(twoyear2)
+
+#With skew
+twoyear3 <- panelAR(socspend ~ socspend_lag + ma2_pratio9010s + ma2_skews + ma2_pop65+ ma2_turnout + ma2_fempar + ma2_stddisp_gall + ma2_pvoc + ma2_union + ma2_unempl + ma2_dreher + gdpgrowth, data=data2yr_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(twoyear3)
+```
+
+#Defining skew as the difference rather than ratio
+```{r}
+data_socspend$skew2<- (data_socspend$ma_pratio9050s)-(data_socspend$ma_pratio5010s)
+redistsample$skew2<-(redistsample$dvpratio9050)-(redistsample$dvpratio5010)
+
+#Redistribution
+
+redistskew<- panelAR(redist ~ redist_lag + dvratio9010 + skew2 + dvturnout + dvfempar +
+                 dvstddisp_gall + dvpvoc + dvunion + dvunempl, data=redistsample,
+               panelVar='id', timeVar='time', autoCorr='ar1',
+               panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1',
+               bound.rho=TRUE) 
+summary(redistskew)
+
+#Social Spending
+
+data_socspend$time <- unlist(by(
+  data_socspend ,data_socspend $id,function(x) seq(1:nrow(x))))
+
+socspend_skew<- panelAR(socspend ~ socspend_lag + ma_pratio9010s + skew2 + ma_pop65+ ma_turnout + ma_fempar + ma_stddisp_gall + ma_pvoc + ma_union + ma_unempl + ma_dreher + gdpgrowth, data=data_socspend, panelVar='id', timeVar='time', autoCorr='psar1', panelCorrMethod='pcse',rho.na.rm=TRUE, panel.weight='t-1', bound.rho=TRUE) 
+summary(socspend_skew)
+
+```
+
 

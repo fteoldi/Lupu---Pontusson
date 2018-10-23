@@ -1,0 +1,14 @@
+library(ggdag)
+lupu <-  dagify(Redistribution ~ Social_Hypothesis,
+                Social_Hypothesis ~ Skew,
+                Redistribution ~ Country_Fixed_Effects,
+                Skew ~ Country_Fixed_Effects,
+                Social_Hypothesis ~ Country_Fixed_Effects,
+                labels = c("Redistribution" = "Redistribution", 
+                           "Social_Hypothesis" = "Social Hypothesis",
+                           "Skew" = "Skew",
+                           "Country_Fixed_Effects" = "Country Fixed Effects"),
+                latent = "Skew",
+                outcome = "Redistribution")
+ggdag(lupu, text = FALSE, use_labels = "label")
+

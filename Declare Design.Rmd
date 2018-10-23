@@ -95,8 +95,6 @@ lagged_dv <- function(data, lambda = 0.9){ # think about lambda
 add_dv <- declare_step(handler = lagged_dv)
 
 fabricated_data <- population() %>% outcomes %>% add_dv
-hist(fabricated_data$redist_l1)
-plot(fabricated_data$skew, fabricated_data$redist_l1)
 ```
 
 Missingness at random
